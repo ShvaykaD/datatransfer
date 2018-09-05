@@ -1,0 +1,38 @@
+[
+  {
+    "id": {
+      "entityType": "DEVICE",
+      "id": "0d543770-b052-11e8-947c-6934752629a4"
+    },
+    "createdTime": 1536072709223,
+    "additionalInfo": null,
+    "tenantId": {
+      "entityType": "TENANT",
+      "id": "8ecddf00-8c02-11e8-adfb-253d58bd09f2"
+    },
+    "customerId": {
+      "entityType": "CUSTOMER",
+      "id": "13814000-1dd2-11b2-8080-808080808080"
+    },
+    "name": "d41d8cd9-8f00-3204-a980-0998ecf8427e",
+    "type": "MC"
+  },
+  {
+    "id": {
+      "entityType": "DEVICE",
+      "id": "7807e3f0-b052-11e8-947c-6934752629a4"
+    },
+    "createdTime": 1536072888239,
+    "additionalInfo": null,
+    "tenantId": {
+      "entityType": "TENANT",
+      "id": "8ecddf00-8c02-11e8-adfb-253d58bd09f2"
+    },
+    "customerId": {
+      "entityType": "CUSTOMER",
+      "id": "13814000-1dd2-11b2-8080-808080808080"
+    },
+    "name": "4440004",
+    "type": "NSU"
+  }
+]
