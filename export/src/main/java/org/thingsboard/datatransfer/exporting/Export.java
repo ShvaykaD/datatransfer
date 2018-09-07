@@ -3,6 +3,7 @@ package org.thingsboard.datatransfer.exporting;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
 import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
 
 import java.io.FileInputStream;
@@ -43,6 +44,9 @@ public class Export {
             TB_TOKEN = tbRestClient.getToken();
 
             log.info("Start exporting...");
+
+            ExportCustomers customers = new ExportCustomers(tbRestClient, mapper, BASE_PATH);
+            customers.getTenantCustomers();
 
             ExportDevices devices = new ExportDevices(tbRestClient, mapper, BASE_PATH);
             devices.getTenantDevices();

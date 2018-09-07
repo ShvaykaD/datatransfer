@@ -1,16 +1,22 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
+import entities.ImportCustomers;
 import entities.ImportDevices;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.server.common.data.id.CustomerId;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Slf4j
 public class Import {
+
+    public static final Map<String, CustomerId> CUSTOMERS_MAP = new HashMap<>();
 
     public static String BASE_PATH;
     public static String TB_BASE_URL;
@@ -42,8 +48,11 @@ public class Import {
 
             log.info("Start exporting...");
 
+            ImportCustomers customers = new ImportCustomers(tbRestClient, mapper, BASE_PATH);
+            customers.saveTenantCustomers(CUSTOMERS_MAP);
+
             ImportDevices devices = new ImportDevices(tbRestClient, mapper, BASE_PATH);
-            devices.saveTenantDevices();
+            devices.saveTenantDevices(CUSTOMERS_MAP);
 
             log.info("Ended importing successfully!");
             EXECUTOR_SERVICE.shutdown();
