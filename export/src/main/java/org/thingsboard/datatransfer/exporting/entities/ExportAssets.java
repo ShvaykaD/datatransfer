@@ -3,6 +3,7 @@ package org.thingsboard.datatransfer.exporting.entities;
 /**
  * Created by mshvayka on 11.09.18.
  */
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -28,7 +29,7 @@ public class ExportAssets {
         this.basePath = basePath;
     }
 
-    public void getTenantAssets(){
+    public void getTenantAssets(ArrayNode relationsArray) {
         Optional<JsonNode> assetsOptional = tbRestClient.findTenantAssets(1000);
 
         BufferedWriter writer;
@@ -36,6 +37,21 @@ public class ExportAssets {
             writer = new BufferedWriter(new FileWriter(new File(basePath + "Assets.json")));
             if (assetsOptional.isPresent()) {
                 ArrayNode assetsArray = (ArrayNode) assetsOptional.get().get("data");
+
+                String strFromType = "ASSET";
+                for (JsonNode assetNode : assetsArray) {
+                    String strAssetId = assetNode.get("id").get("id").asText();
+
+                    Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strAssetId, strFromType);
+                    if (relationOptional.isPresent()) {
+                        JsonNode node = relationOptional.get();
+                        if (node.isArray() && node.size() != 0) {
+                            relationsArray.add(node);
+                        }
+                    }
+                }
+
+
                 writer.write(mapper.writeValueAsString(assetsArray));
             }
             writer.close();

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
@@ -15,10 +16,10 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.thingsboard.datatransfer.importing.Import.NULL_UUID;
+
 @Slf4j
 public class ImportDevices {
-
-    public static final String NULL_UUID = "13814000-1dd2-11b2-8080-808080808080";
 
     private final ObjectMapper mapper;
     private final RestClient tbRestClient;
@@ -32,7 +33,7 @@ public class ImportDevices {
         this.emptyDb = emptyDb;
     }
 
-    public void saveTenantDevices(Map<String, CustomerId> customerIdMap) {
+    public void saveTenantDevices(Map<String, CustomerId> customerIdMap, Map<String, DeviceId> devicesIdMap) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(basePath + "Devices.json")));
             JsonNode jsonNode = mapper.readTree(content);
@@ -52,6 +53,7 @@ public class ImportDevices {
                     } else {
                         savedDevice = tbRestClient.createDevice(node.get("name").asText(), node.get("type").asText());
                     }
+                    devicesIdMap.put(node.get("id").get("id").asText(), savedDevice.getId());
 
                     String strCustomerId = node.get("customerId").get("id").asText();
                     if (!strCustomerId.equals(NULL_UUID)) {
@@ -60,7 +62,6 @@ public class ImportDevices {
                         } else {
                             tbRestClient.assignDeviceToPublicCustomer(savedDevice.getId());
                         }
-
                     }
                     DeviceCredentials deviceCredentialsOptional = tbRestClient.getCredentials(savedDevice.getId());
                     if (node.get("credentialsType").asText().equals(DeviceCredentialsType.ACCESS_TOKEN.name())) {

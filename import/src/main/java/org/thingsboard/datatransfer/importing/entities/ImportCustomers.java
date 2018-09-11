@@ -29,7 +29,6 @@ public class ImportCustomers {
         this.emptyDb = emptyDb;
     }
 
-
     public void saveTenantCustomers(Map<String, CustomerId> customerIdMap) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(basePath + "Customers.json")));
@@ -43,7 +42,6 @@ public class ImportCustomers {
                         }
                         Customer customer = tbRestClient.createCustomer(node.get("title").asText());
                         customerIdMap.put(node.get("id").get("id").asText(), customer.getId());
-
                     }
                 }
             }

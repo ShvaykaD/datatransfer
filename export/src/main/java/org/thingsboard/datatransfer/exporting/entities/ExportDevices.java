@@ -29,7 +29,7 @@ public class ExportDevices {
         this.basePath = basePath;
     }
 
-    public void getTenantDevices() {
+    public void getTenantDevices(ArrayNode relationsArray) {
         Optional<JsonNode> devicesOptional = tbRestClient.findTenantDevices(1000);
         BufferedWriter writer;
         try {
@@ -37,7 +37,19 @@ public class ExportDevices {
             if (devicesOptional.isPresent()) {
                 ArrayNode deviceArray = (ArrayNode) devicesOptional.get().get("data");
                 for (JsonNode deviceNode : deviceArray) {
+
+                    String strFromType = "DEVICE";
                     String strDeviceId = deviceNode.get("id").get("id").asText();
+
+                    Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strDeviceId, strFromType);
+                    if (relationOptional.isPresent()) {
+                        JsonNode node = relationOptional.get();
+                        if (node.isArray() && node.size() != 0) {
+                            relationsArray.add(node);
+                        }
+                    }
+
+
                     DeviceCredentials deviceCredentials = tbRestClient.getCredentials(new DeviceId(UUID.fromString(strDeviceId)));
                     ObjectNode deviceNodeWithCredentials = (ObjectNode) deviceNode;
                     deviceNodeWithCredentials.put("credentialsType", deviceCredentials.getCredentialsType().name());

@@ -1,15 +1,22 @@
 package org.thingsboard.datatransfer.importing;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.thingsboard.datatransfer.importing.entities.ImportAssets;
 import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.entities.ImportDevices;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -19,7 +26,10 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class Import {
 
-    public static final Map<String, CustomerId> CUSTOMERS_MAP = new HashMap<>();
+    private static final Map<String, CustomerId> CUSTOMERS_MAP = new HashMap<>();
+    private static final Map<String, AssetId> ASSETS_MAP = new HashMap<>();
+    private static final Map<String, DeviceId> DEVICES_MAP = new HashMap<>();
+    public static final String NULL_UUID = "13814000-1dd2-11b2-8080-808080808080";
 
     public static String BASE_PATH;
     public static String TB_BASE_URL;
@@ -57,16 +67,73 @@ public class Import {
             customers.saveTenantCustomers(CUSTOMERS_MAP);
 
             ImportDevices devices = new ImportDevices(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
-            devices.saveTenantDevices(CUSTOMERS_MAP);
+            devices.saveTenantDevices(CUSTOMERS_MAP, DEVICES_MAP);
 
             ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
-            assets.saveTenantAssets(CUSTOMERS_MAP);
+            assets.saveTenantAssets(CUSTOMERS_MAP, ASSETS_MAP);
+
+            try {
+                String content = new String(Files.readAllBytes(Paths.get(BASE_PATH + "Relations.json")));
+                JsonNode jsonNode = mapper.readTree(content);
+                if (jsonNode.isArray()) {
+                    for (JsonNode nodeArray : jsonNode) {
+                        for (JsonNode node : nodeArray) {
+                            String fromType = node.get("from").get("entityType").asText();
+                            String fromId = node.get("from").get("id").asText();
+                            String toType = node.get("to").get("entityType").asText();
+                            String toId = node.get("to").get("id").asText();
+                            String relationType = node.get("type").asText();
+                            EntityId entityId;
+                            switch (fromType) {
+                                case "CUSTOMER":
+                                    CustomerId customerId = CUSTOMERS_MAP.get(fromId);
+                                    entityId = getToEntityId(toType, toId);
+                                    tbRestClient.makeRelation(relationType, customerId, entityId);
+                                    break;
+                                case "ASSET":
+                                    AssetId assetId = ASSETS_MAP.get(fromId);
+                                    entityId = getToEntityId(toType, toId);
+                                    tbRestClient.makeRelation(relationType, assetId, entityId);
+                                    break;
+                                case "DEVICE":
+                                    DeviceId deviceId = DEVICES_MAP.get(fromId);
+                                    entityId = getToEntityId(toType, toId);
+                                    tbRestClient.makeRelation(relationType, deviceId, entityId);
+                                    break;
+                                default:
+                                    log.warn("ERROR!!!");
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                log.warn("");
+            }
+
 
             log.info("Ended importing successfully!");
             EXECUTOR_SERVICE.shutdown();
         } catch (Exception e) {
             log.error("Could not read properties file {}", filename, e);
         }
+    }
+
+    private static EntityId getToEntityId(String toType, String toId) {
+        EntityId entityId;
+        switch (toType) {
+            case "CUSTOMER":
+                entityId = CUSTOMERS_MAP.get(toId);
+                break;
+            case "ASSET":
+                entityId = ASSETS_MAP.get(toId);
+                break;
+            case "DEVICE":
+                entityId = DEVICES_MAP.get(toId);
+                break;
+            default:
+                throw new RuntimeException();
+        }
+        return entityId;
     }
 
 }
