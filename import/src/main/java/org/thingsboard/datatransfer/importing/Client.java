@@ -1,3 +1,5 @@
+package org.thingsboard.datatransfer.importing;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;

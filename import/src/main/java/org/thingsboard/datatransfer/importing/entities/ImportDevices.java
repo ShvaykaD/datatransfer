@@ -1,10 +1,9 @@
-package entities;
+package org.thingsboard.datatransfer.importing.entities;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -24,11 +23,13 @@ public class ImportDevices {
     private final ObjectMapper mapper;
     private final RestClient tbRestClient;
     private final String basePath;
+    private final boolean emptyDb;
 
-    public ImportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
+    public ImportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean emptyDb) {
         this.tbRestClient = tbRestClient;
         this.mapper = mapper;
         this.basePath = basePath;
+        this.emptyDb = emptyDb;
     }
 
     public void saveTenantDevices(Map<String, CustomerId> customerIdMap) {
@@ -37,6 +38,10 @@ public class ImportDevices {
             JsonNode jsonNode = mapper.readTree(content);
             if (jsonNode.isArray()) {
                 for (JsonNode node : jsonNode) {
+                    if (!emptyDb) {
+                        Optional<Device> deviceOptional = tbRestClient.findDevice(node.get("name").asText());
+                        deviceOptional.ifPresent(device -> tbRestClient.deleteDevice(device.getId()));
+                    }
                     Device savedDevice;
                     if (node.get("additionalInfo").has("gateway")) {
                         Device device = new Device();

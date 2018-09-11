@@ -1,8 +1,11 @@
+package org.thingsboard.datatransfer.importing;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import entities.ImportCustomers;
-import entities.ImportDevices;
+import org.thingsboard.datatransfer.importing.entities.ImportAssets;
+import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.importing.entities.ImportDevices;
 import org.thingsboard.server.common.data.id.CustomerId;
 
 import java.io.FileInputStream;
@@ -21,6 +24,7 @@ public class Import {
     public static String BASE_PATH;
     public static String TB_BASE_URL;
     public static String TB_TOKEN;
+    public static boolean EMPTY_DB;
 
     public static int THRESHOLD;
     public static ExecutorService EXECUTOR_SERVICE;
@@ -45,14 +49,18 @@ public class Import {
             RestClient tbRestClient = new RestClient(TB_BASE_URL);
             tbRestClient.login(properties.getProperty("tbLogin"), properties.getProperty("tbPassword"));
             TB_TOKEN = tbRestClient.getToken();
+            EMPTY_DB = Boolean.parseBoolean(properties.getProperty("emptyDb"));
 
-            log.info("Start exporting...");
+            log.info("Start importing...");
 
-            ImportCustomers customers = new ImportCustomers(tbRestClient, mapper, BASE_PATH);
+            ImportCustomers customers = new ImportCustomers(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
             customers.saveTenantCustomers(CUSTOMERS_MAP);
 
-            ImportDevices devices = new ImportDevices(tbRestClient, mapper, BASE_PATH);
+            ImportDevices devices = new ImportDevices(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
             devices.saveTenantDevices(CUSTOMERS_MAP);
+
+            ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
+            assets.saveTenantAssets(CUSTOMERS_MAP);
 
             log.info("Ended importing successfully!");
             EXECUTOR_SERVICE.shutdown();
