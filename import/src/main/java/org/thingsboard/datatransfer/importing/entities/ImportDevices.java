@@ -1,10 +1,9 @@
-package entities;
+package org.thingsboard.datatransfer.importing.entities;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 public class ImportDevices {
