@@ -5,6 +5,7 @@ import org.thingsboard.datatransfer.importing.entities.ImportAssets;
 import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.importing.entities.ImportDevices;
 import org.thingsboard.server.common.data.id.CustomerId;
 
 import java.io.FileInputStream;
@@ -55,8 +56,8 @@ public class Import {
             ImportCustomers customers = new ImportCustomers(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
             customers.saveTenantCustomers(CUSTOMERS_MAP);
 
-           /* ImportDevices devices = new ImportDevices(tbRestClient, mapper, BASE_PATH);
-            devices.saveTenantDevices(CUSTOMERS_MAP);*/
+            ImportDevices devices = new ImportDevices(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
+            devices.saveTenantDevices(CUSTOMERS_MAP);
 
             ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
             assets.saveTenantAssets(CUSTOMERS_MAP);
