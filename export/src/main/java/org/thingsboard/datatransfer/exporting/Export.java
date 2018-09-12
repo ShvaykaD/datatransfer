@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,6 +34,7 @@ public class Export {
     public static void main(String[] args) {
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode relationsArray = mapper.createArrayNode();
+        ArrayNode telemetryArray = mapper.createArrayNode();
         Properties properties = new Properties();
         String filename;
         if (args.length > 0) {
@@ -61,10 +63,17 @@ public class Export {
             devices.getTenantDevices(relationsArray);
 
             ExportAssets assets = new ExportAssets(tbRestClient, mapper, BASE_PATH);
-            assets.getTenantAssets(relationsArray);
+            assets.getTenantAssets(relationsArray, telemetryArray);
 
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(BASE_PATH + "Relations.json")))) {
                 writer.write(mapper.writeValueAsString(relationsArray));
+                writer.close();
+            } catch (IOException e) {
+                log.warn("");
+            }
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(BASE_PATH + "Telemetry.json")))) {
+                writer.write(mapper.writeValueAsString(telemetryArray));
                 writer.close();
             } catch (IOException e) {
                 log.warn("");

@@ -7,6 +7,7 @@ package org.thingsboard.datatransfer.exporting.entities;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 
@@ -29,7 +30,7 @@ public class ExportAssets {
         this.basePath = basePath;
     }
 
-    public void getTenantAssets(ArrayNode relationsArray) {
+    public void getTenantAssets(ArrayNode relationsArray, ArrayNode telemetryArray) {
         Optional<JsonNode> assetsOptional = tbRestClient.findTenantAssets(1000);
 
         BufferedWriter writer;
@@ -41,6 +42,37 @@ public class ExportAssets {
                 String strFromType = "ASSET";
                 for (JsonNode assetNode : assetsArray) {
                     String strAssetId = assetNode.get("id").get("id").asText();
+
+
+                    Optional<JsonNode> telemetryKeysOptional = tbRestClient.getTelemetryKeys(strFromType, strAssetId);
+                    if (telemetryKeysOptional.isPresent()) {
+                        JsonNode telemetryKeysNode = telemetryKeysOptional.get();
+
+                        StringBuilder keys = new StringBuilder();
+                        int i = 1;
+                        for (JsonNode node : telemetryKeysNode) {
+                            keys.append(node.asText());
+                            if (telemetryKeysNode.has(i)) {
+                                keys.append(",");
+                            }
+                            i++;
+                        }
+                        if (keys.length() != 0 ) {
+                            Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strAssetId, keys.toString(), 100000, 0L, System.currentTimeMillis());
+                            if (telemetryNodeOptional.isPresent()) {
+                                JsonNode telemetryNode = telemetryNodeOptional.get();
+
+                                ObjectNode telemetryObj = mapper.createObjectNode();
+                                telemetryObj.put("entityType", strFromType);
+                                telemetryObj.put("entityId", strAssetId);
+                                telemetryObj.setAll((ObjectNode) telemetryNode);
+
+
+                                telemetryArray.add(telemetryObj);
+                            }
+                        }
+                    }
+
 
                     Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strAssetId, strFromType);
                     if (relationOptional.isPresent()) {

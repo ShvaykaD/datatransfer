@@ -7,6 +7,7 @@ import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.entities.ImportDevices;
+import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -71,6 +72,9 @@ public class Import {
 
             ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
             assets.saveTenantAssets(CUSTOMERS_MAP, ASSETS_MAP);
+
+            ImportTelemetry telemetry = new ImportTelemetry(tbRestClient, mapper, BASE_PATH);
+            telemetry.saveTelemetry(ASSETS_MAP);
 
             try {
                 String content = new String(Files.readAllBytes(Paths.get(BASE_PATH + "Relations.json")));
