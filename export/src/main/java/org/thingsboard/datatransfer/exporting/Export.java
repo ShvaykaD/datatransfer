@@ -57,14 +57,14 @@ public class Export {
 
             log.info("Start exporting...");
 
-            /*ExportCustomers customers = new ExportCustomers(tbRestClient, mapper, BASE_PATH);
-            customers.getTenantCustomers(relationsArray);*/
+            ExportCustomers customers = new ExportCustomers(tbRestClient, mapper, BASE_PATH);
+            customers.getTenantCustomers(relationsArray);
 
             ExportDevices devices = new ExportDevices(tbRestClient, mapper, BASE_PATH);
             devices.getTenantDevices(relationsArray);
 
-           /* ExportAssets assets = new ExportAssets(tbRestClient, mapper, BASE_PATH);
-            assets.getTenantAssets(relationsArray, telemetryArray);*/
+            ExportAssets assets = new ExportAssets(tbRestClient, mapper, BASE_PATH);
+            assets.getTenantAssets(relationsArray, telemetryArray);
 
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, mapper , BASE_PATH);
             dashboards.getTenantDashboards(relationsArray);
@@ -77,13 +77,13 @@ public class Export {
                 log.warn("");
             }
 
-            /*try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(BASE_PATH + "Telemetry.json")))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(BASE_PATH + "Telemetry.json")))) {
                 writer.write(mapper.writeValueAsString(telemetryArray));
                 writer.close();
             } catch (IOException e) {
                 log.warn("");
             }
-*/
+
             log.info("Ended exporting successfully!");
             EXECUTOR_SERVICE.shutdown();
         } catch (Exception e) {
