@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.exporting.entities.ExportAssets;
 import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
+import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
 import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 
@@ -64,6 +65,10 @@ public class Export {
 
             ExportAssets assets = new ExportAssets(tbRestClient, mapper, BASE_PATH);
             assets.getTenantAssets(relationsArray, telemetryArray);
+
+            ExportDashboards dashboards = new ExportDashboards(tbRestClient, mapper , BASE_PATH);
+            dashboards.getTenantDashboards(relationsArray);
+
 
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(BASE_PATH + "Relations.json")))) {
                 writer.write(mapper.writeValueAsString(relationsArray));

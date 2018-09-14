@@ -2,16 +2,10 @@ package org.thingsboard.datatransfer.importing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.thingsboard.datatransfer.importing.entities.ImportAssets;
-import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.importing.entities.ImportDevices;
-import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.datatransfer.importing.entities.*;
+import org.thingsboard.server.common.data.id.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,6 +24,7 @@ public class Import {
     private static final Map<String, CustomerId> CUSTOMERS_MAP = new HashMap<>();
     private static final Map<String, AssetId> ASSETS_MAP = new HashMap<>();
     private static final Map<String, DeviceId> DEVICES_MAP = new HashMap<>();
+    private static final Map<String, DashboardId> DASHBOARD_MAP = new HashMap<>();
     public static final String NULL_UUID = "13814000-1dd2-11b2-8080-808080808080";
 
     public static String BASE_PATH;
@@ -73,8 +68,12 @@ public class Import {
             ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, EMPTY_DB);
             assets.saveTenantAssets(CUSTOMERS_MAP, ASSETS_MAP);
 
+            ImportDashboards dashboards = new ImportDashboards(tbRestClient, mapper, BASE_PATH);
+            dashboards.saveTenantDashboards(CUSTOMERS_MAP, DASHBOARD_MAP);
+
             ImportTelemetry telemetry = new ImportTelemetry(tbRestClient, mapper, BASE_PATH);
             telemetry.saveTelemetry(ASSETS_MAP);
+
 
             try {
                 String content = new String(Files.readAllBytes(Paths.get(BASE_PATH + "Relations.json")));
@@ -103,6 +102,11 @@ public class Import {
                                     DeviceId deviceId = DEVICES_MAP.get(fromId);
                                     entityId = getToEntityId(toType, toId);
                                     tbRestClient.makeRelation(relationType, deviceId, entityId);
+                                    break;
+                                case "DASHBOARD":
+                                    DashboardId dashboardId = DASHBOARD_MAP.get(fromId);
+                                    entityId = getToEntityId(toType, toId);
+                                    tbRestClient.makeRelation(relationType, dashboardId, entityId);
                                     break;
                                 default:
                                     log.warn("ERROR!!!");
@@ -133,6 +137,9 @@ public class Import {
                 break;
             case "DEVICE":
                 entityId = DEVICES_MAP.get(toId);
+                break;
+            case "DASHBOARD":
+                entityId = DASHBOARD_MAP.get(toId);
                 break;
             default:
                 throw new RuntimeException();
