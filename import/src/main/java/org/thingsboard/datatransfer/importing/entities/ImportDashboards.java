@@ -30,7 +30,6 @@ public class ImportDashboards {
         this.basePath = basePath;
     }
 
-
     public void saveTenantDashboards(Map<String, CustomerId> customersIdMap, Map<String, DashboardId> dashboardIdMap) {
         try {
             String content = new String(Files.readAllBytes(Paths.get(basePath + "Dashboards.json")));
@@ -39,27 +38,25 @@ public class ImportDashboards {
                 for (JsonNode node : jsonNode) {
                     Dashboard dashboard = new Dashboard();
                     dashboard.setTitle(node.get("title").asText());
-                    if (node.get("configuration") != null) {
-                        dashboard.setConfiguration(node);
+                    if (!node.get("configuration").isNull()) {
+                        dashboard.setConfiguration(node.get("configuration"));
                     }
                     Dashboard savedDashboard = tbRestClient.createDashboard(dashboard);
                     dashboardIdMap.put(node.get("id").get("id").asText(), savedDashboard.getId());
-                    if (node.get("assignedCustomers") != null) {
+                    if (!node.get("assignedCustomers").isNull()) {
                         ArrayNode customersArray = (ArrayNode) node.get("assignedCustomers");
                         for (JsonNode customerNode : customersArray) {
                             if (customerNode.get("public").asBoolean()) {
                                 tbRestClient.assignDashboardToPublicCustomer(savedDashboard.getId());
-                            }else{
+                            } else {
                                 tbRestClient.assignDashboard(customersIdMap.get(customerNode.get("customerId").get("id").asText()), savedDashboard.getId());
                             }
                         }
                     }
-
                 }
             }
         } catch (IOException e) {
             log.warn("");
         }
-
     }
 }

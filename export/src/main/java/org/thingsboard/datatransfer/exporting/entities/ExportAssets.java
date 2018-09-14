@@ -65,8 +65,7 @@ public class ExportAssets {
                                 ObjectNode telemetryObj = mapper.createObjectNode();
                                 telemetryObj.put("entityType", strFromType);
                                 telemetryObj.put("entityId", strAssetId);
-                                telemetryObj.setAll((ObjectNode) telemetryNode);
-
+                                telemetryObj.set("telemetry", telemetryNode);
 
                                 telemetryArray.add(telemetryObj);
                             }
