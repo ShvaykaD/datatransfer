@@ -17,51 +17,44 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-public class ExportDevices {
-
-    private final ObjectMapper mapper;
-    private final RestClient tbRestClient;
-    private final String basePath;
+public class ExportDevices extends ExportEntity {
 
     public ExportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        this.tbRestClient = tbRestClient;
-        this.mapper = mapper;
-        this.basePath = basePath;
+        super(tbRestClient, mapper, basePath);
     }
 
-    public void getTenantDevices(ArrayNode relationsArray) {
-        Optional<JsonNode> devicesOptional = tbRestClient.findTenantDevices(1000);
-        BufferedWriter writer;
-        try {
-            writer = new BufferedWriter(new FileWriter(new File(basePath + "Devices.json")));
+    public void getTenantDevices(ArrayNode relationsArray, ArrayNode telemetryArray, int limit) {
+        Optional<JsonNode> devicesOptional = tbRestClient.findTenantDevices(limit);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Devices.json")))) {
             if (devicesOptional.isPresent()) {
                 ArrayNode deviceArray = (ArrayNode) devicesOptional.get().get("data");
+                String strFromType = "DEVICE";
                 for (JsonNode deviceNode : deviceArray) {
-
-                    String strFromType = "DEVICE";
                     String strDeviceId = deviceNode.get("id").get("id").asText();
+                    addRelationToNode(relationsArray, strDeviceId, strFromType);
+                    addDeviceCredentialsToDeviceNode((ObjectNode) deviceNode, strDeviceId);
 
-                    Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strDeviceId, strFromType);
-                    if (relationOptional.isPresent()) {
-                        JsonNode node = relationOptional.get();
-                        if (node.isArray() && node.size() != 0) {
-                            relationsArray.add(node);
-                        }
+                    StringBuilder keys = getTelemetryKeys(strFromType, strDeviceId);
+
+                    if (keys != null && keys.length() != 0) {
+                        Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strDeviceId,
+                                keys.toString(), limit, 0L, System.currentTimeMillis());
+                        telemetryNodeOptional.ifPresent(jsonNode ->
+                                telemetryArray.add(createTelemetryNode(strFromType, strDeviceId, jsonNode)));
                     }
-
-
-                    DeviceCredentials deviceCredentials = tbRestClient.getCredentials(new DeviceId(UUID.fromString(strDeviceId)));
-                    ObjectNode deviceNodeWithCredentials = (ObjectNode) deviceNode;
-                    deviceNodeWithCredentials.put("credentialsType", deviceCredentials.getCredentialsType().name());
-                    deviceNodeWithCredentials.put("credentialsId", deviceCredentials.getCredentialsId());
-                    deviceNodeWithCredentials.put("credentialsValue", deviceCredentials.getCredentialsValue());
                 }
                 writer.write(mapper.writeValueAsString(deviceArray));
             }
-            writer.close();
         } catch (IOException e) {
-            log.warn("");
+            log.warn("Could not export devices to file.");
         }
     }
 
+    private void addDeviceCredentialsToDeviceNode(ObjectNode deviceNode, String strDeviceId) {
+        DeviceCredentials deviceCredentials = tbRestClient.getCredentials(new DeviceId(UUID.fromString(strDeviceId)));
+        deviceNode.put("credentialsType", deviceCredentials.getCredentialsType().name());
+        deviceNode.put("credentialsId", deviceCredentials.getCredentialsId());
+        deviceNode.put("credentialsValue", deviceCredentials.getCredentialsValue());
+    }
 }

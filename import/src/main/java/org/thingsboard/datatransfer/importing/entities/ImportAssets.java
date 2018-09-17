@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 
 import java.io.IOException;
@@ -34,30 +34,35 @@ public class ImportAssets {
         this.emptyDb = emptyDb;
     }
 
-    public void saveTenantAssets(Map<String, CustomerId> customerIdMap, Map<String, AssetId> assetsIdMap) {
+    public void saveTenantAssets(LoadContext loadContext) {
+        JsonNode jsonNode = null;
         try {
-            String content = new String(Files.readAllBytes(Paths.get(basePath + "Assets.json")));
-            JsonNode jsonNode = mapper.readTree(content);
-            if (jsonNode.isArray()) {
-                for (JsonNode node : jsonNode) {
-                    if (!emptyDb) {
-                        Optional<Asset> assetOptional = tbRestClient.findAsset(node.get("name").asText());
-                        assetOptional.ifPresent(asset -> tbRestClient.deleteAsset(asset.getId()));
-                    }
-                    Asset savedAsset = tbRestClient.createAsset(node.get("name").asText(), node.get("type").asText());
-                    assetsIdMap.put(node.get("id").get("id").asText(), savedAsset.getId());
-                    String strCustomerId = node.get("customerId").get("id").asText();
-                    if (!strCustomerId.equals(NULL_UUID)) {
-                        if (customerIdMap.containsKey(strCustomerId)) {
-                            tbRestClient.assignAsset(customerIdMap.get(strCustomerId), savedAsset.getId());
-                        } else {
-                            tbRestClient.assignAssetToPublicCustomer(savedAsset.getId());
-                        }
-                    }
-                }
-            }
+            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Assets.json"))));
         } catch (IOException e) {
-            log.warn("");
+            log.warn("Could not read assets file");
+        }
+        if (jsonNode != null) {
+            for (JsonNode node : jsonNode) {
+                String assetName = node.get("name").asText();
+                if (!emptyDb) {
+                    Optional<Asset> assetOptional = tbRestClient.findAsset(assetName);
+                    assetOptional.ifPresent(asset -> tbRestClient.deleteAsset(asset.getId()));
+                }
+                Asset asset = tbRestClient.createAsset(assetName, node.get("type").asText());
+                loadContext.getAssetIdMap().put(node.get("id").get("id").asText(), asset.getId());
+                assignAssetToCustomer(loadContext.getCustomerIdMap(), node, asset);
+            }
+        }
+    }
+
+    private void assignAssetToCustomer(Map<String, CustomerId> customerIdMap, JsonNode node, Asset asset) {
+        String strCustomerId = node.get("customerId").get("id").asText();
+        if (!strCustomerId.equals(NULL_UUID)) {
+            if (customerIdMap.containsKey(strCustomerId)) {
+                tbRestClient.assignAsset(customerIdMap.get(strCustomerId), asset.getId());
+            } else {
+                tbRestClient.assignAssetToPublicCustomer(asset.getId());
+            }
         }
     }
 }

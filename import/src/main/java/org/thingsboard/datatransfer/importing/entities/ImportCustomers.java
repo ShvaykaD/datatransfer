@@ -4,21 +4,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.id.CustomerId;
-
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
 public class ImportCustomers {
 
-    private final ObjectMapper mapper;
     private final RestClient tbRestClient;
+    private final ObjectMapper mapper;
     private final String basePath;
     private final boolean emptyDb;
 
@@ -29,25 +27,28 @@ public class ImportCustomers {
         this.emptyDb = emptyDb;
     }
 
-    public void saveTenantCustomers(Map<String, CustomerId> customerIdMap) {
+    public void saveTenantCustomers(LoadContext loadContext) {
+        JsonNode jsonNode = null;
         try {
-            String content = new String(Files.readAllBytes(Paths.get(basePath + "Customers.json")));
-            JsonNode jsonNode = mapper.readTree(content);
-            if (jsonNode.isArray()) {
-                for (JsonNode node : jsonNode) {
-                    if (!node.get("additionalInfo").has("isPublic")) {
-                        if (!emptyDb) {
-                            Optional<Customer> customerOptional = tbRestClient.findCustomer(node.get("title").asText());
-                            customerOptional.ifPresent(customer -> tbRestClient.deleteCustomer(customer.getId()));
-                        }
-                        Customer customer = tbRestClient.createCustomer(node.get("title").asText());
-                        customerIdMap.put(node.get("id").get("id").asText(), customer.getId());
+            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Customers.json"))));
+        } catch (IOException e) {
+            log.warn("Could not read customers file");
+        }
+        if (jsonNode != null) {
+            for (JsonNode node : jsonNode) {
+                if (!node.get("additionalInfo").has("isPublic")) {
+                    String customerTitle = node.get("title").asText();
+                    if (!emptyDb) {
+                        Optional<Customer> customerOptional = tbRestClient.findCustomer(customerTitle);
+                        customerOptional.ifPresent(customer -> tbRestClient.deleteCustomer(customer.getId()));
                     }
+                    Customer customer = tbRestClient.createCustomer(customerTitle);
+                    loadContext.getCustomerIdMap().put(node.get("id").get("id").asText(), customer.getId());
                 }
             }
-        } catch (IOException e) {
-            log.warn("");
         }
+
+
     }
 
 }

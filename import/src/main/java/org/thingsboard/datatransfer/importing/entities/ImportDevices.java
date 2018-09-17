@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
@@ -33,50 +33,63 @@ public class ImportDevices {
         this.emptyDb = emptyDb;
     }
 
-    public void saveTenantDevices(Map<String, CustomerId> customerIdMap, Map<String, DeviceId> devicesIdMap) {
+    public void saveTenantDevices(LoadContext loadContext) {
+        JsonNode jsonNode = null;
         try {
-            String content = new String(Files.readAllBytes(Paths.get(basePath + "Devices.json")));
-            JsonNode jsonNode = mapper.readTree(content);
-            if (jsonNode.isArray()) {
-                for (JsonNode node : jsonNode) {
-                    if (!emptyDb) {
-                        Optional<Device> deviceOptional = tbRestClient.findDevice(node.get("name").asText());
-                        deviceOptional.ifPresent(device -> tbRestClient.deleteDevice(device.getId()));
-                    }
-                    Device savedDevice;
-                    if (node.get("additionalInfo").has("gateway")) {
-                        Device device = new Device();
-                        device.setName(node.get("name").asText());
-                        device.setType(node.get("type").asText());
-                        device.setAdditionalInfo(mapper.createObjectNode().putObject("additionalInfo").put("gateway", true));
-                        savedDevice = tbRestClient.createDevice(device);
-                    } else {
-                        savedDevice = tbRestClient.createDevice(node.get("name").asText(), node.get("type").asText());
-                    }
-                    devicesIdMap.put(node.get("id").get("id").asText(), savedDevice.getId());
-
-                    String strCustomerId = node.get("customerId").get("id").asText();
-                    if (!strCustomerId.equals(NULL_UUID)) {
-                        if (customerIdMap.containsKey(strCustomerId)) {
-                            tbRestClient.assignDevice(customerIdMap.get(strCustomerId), savedDevice.getId());
-                        } else {
-                            tbRestClient.assignDeviceToPublicCustomer(savedDevice.getId());
-                        }
-                    }
-                    DeviceCredentials deviceCredentialsOptional = tbRestClient.getCredentials(savedDevice.getId());
-                    if (node.get("credentialsType").asText().equals(DeviceCredentialsType.ACCESS_TOKEN.name())) {
-                        deviceCredentialsOptional.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-                    } else {
-                        deviceCredentialsOptional.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-                    }
-                    deviceCredentialsOptional.setCredentialsId(node.get("credentialsId").asText());
-                    deviceCredentialsOptional.setCredentialsValue(node.get("credentialsValue").asText());
-                    tbRestClient.saveDeviceCredentials(deviceCredentialsOptional);
-                }
-            }
+            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Devices.json"))));
         } catch (IOException e) {
-            log.warn("");
+            log.warn("Could not read devices file");
         }
+        if (jsonNode != null) {
+            for (JsonNode node : jsonNode) {
+                if (!emptyDb) {
+                    Optional<Device> deviceOptional = tbRestClient.findDevice(node.get("name").asText());
+                    deviceOptional.ifPresent(device -> tbRestClient.deleteDevice(device.getId()));
+                }
+                Device device = createDevice(node);
+                loadContext.getDeviceIdMap().put(node.get("id").get("id").asText(), device.getId());
+
+                assignDeviceToCustomer(loadContext.getCustomerIdMap(), node, device);
+                createCredentialsForDevice(node, device);
+            }
+        }
+    }
+
+    private void createCredentialsForDevice(JsonNode node, Device device) {
+        DeviceCredentials deviceCredentialsOptional = tbRestClient.getCredentials(device.getId());
+        if (node.get("credentialsType").asText().equals(DeviceCredentialsType.ACCESS_TOKEN.name())) {
+            deviceCredentialsOptional.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        } else {
+            deviceCredentialsOptional.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
+        }
+        deviceCredentialsOptional.setCredentialsId(node.get("credentialsId").asText());
+        deviceCredentialsOptional.setCredentialsValue(node.get("credentialsValue").asText());
+        tbRestClient.saveDeviceCredentials(deviceCredentialsOptional);
+    }
+
+    private void assignDeviceToCustomer(Map<String, CustomerId> customerIdMap, JsonNode node, Device savedDevice) {
+        String strCustomerId = node.get("customerId").get("id").asText();
+        if (!strCustomerId.equals(NULL_UUID)) {
+            if (customerIdMap.containsKey(strCustomerId)) {
+                tbRestClient.assignDevice(customerIdMap.get(strCustomerId), savedDevice.getId());
+            } else {
+                tbRestClient.assignDeviceToPublicCustomer(savedDevice.getId());
+            }
+        }
+    }
+
+    private Device createDevice(JsonNode node) {
+        Device savedDevice;
+        if (node.get("additionalInfo").has("gateway")) {
+            Device device = new Device();
+            device.setName(node.get("name").asText());
+            device.setType(node.get("type").asText());
+            device.setAdditionalInfo(mapper.createObjectNode().putObject("additionalInfo").put("gateway", true));
+            savedDevice = tbRestClient.createDevice(device);
+        } else {
+            savedDevice = tbRestClient.createDevice(node.get("name").asText(), node.get("type").asText());
+        }
+        return savedDevice;
     }
 
 }

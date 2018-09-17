@@ -1,6 +1,7 @@
 package org.thingsboard.datatransfer.importing;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -10,6 +11,7 @@ import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
+@Slf4j
 public class Client {
 
     private HttpClient client;
