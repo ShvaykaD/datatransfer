@@ -51,11 +51,14 @@ public class ExportEntity {
         return null;
     }
 
-    ObjectNode createTelemetryNode(String strFromType, String strEntityId, JsonNode node) {
+
+    ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
         ObjectNode telemetryNode = mapper.createObjectNode();
         telemetryNode.put("entityType", strFromType);
         telemetryNode.put("entityId", strEntityId);
-        telemetryNode.set("telemetry", node);
+        telemetryNode.set(dataType, node);
         return telemetryNode;
     }
+
+
 }

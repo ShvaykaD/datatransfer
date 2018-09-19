@@ -36,6 +36,7 @@ public class Export {
     public static void main(String[] args) {
         ArrayNode relationsArray = MAPPER.createArrayNode();
         ArrayNode telemetryArray = MAPPER.createArrayNode();
+        ArrayNode attributesArray = MAPPER.createArrayNode();
         Properties properties = new Properties();
         String filename;
         if (args.length > 0) {
@@ -61,16 +62,17 @@ public class Export {
             new ExportEntity(tbRestClient, MAPPER, BASE_PATH);
 
             ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH);
-            customers.getTenantCustomers(relationsArray, LIMIT);
+            customers.getTenantCustomers(relationsArray, attributesArray, LIMIT);
 
             ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH);
-            devices.getTenantDevices(relationsArray, telemetryArray, LIMIT);
+            devices.getTenantDevices(relationsArray, telemetryArray, attributesArray, LIMIT);
 
             ExportAssets assets = new ExportAssets(tbRestClient, MAPPER, BASE_PATH);
-            assets.getTenantAssets(relationsArray, telemetryArray, LIMIT);
+            assets.getTenantAssets(relationsArray, telemetryArray, attributesArray, LIMIT);
 
             writeToFile("Relations.json", relationsArray);
             writeToFile("Telemetry.json", telemetryArray);
+            writeToFile("Attributes.json", attributesArray);
 
             log.info("Ended exporting successfully!");
             EXECUTOR_SERVICE.shutdown();

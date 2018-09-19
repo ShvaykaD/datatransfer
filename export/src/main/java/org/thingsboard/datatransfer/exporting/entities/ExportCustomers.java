@@ -19,7 +19,7 @@ public class ExportCustomers extends ExportEntity {
         super(tbRestClient, mapper, basePath);
     }
 
-    public void getTenantCustomers(ArrayNode relationsArray, int limit) {
+    public void getTenantCustomers(ArrayNode relationsArray, ArrayNode attributesArray, int limit) {
         Optional<JsonNode> customersOptional = tbRestClient.findTenantCustomers(limit);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Customers.json")))) {
@@ -30,6 +30,11 @@ public class ExportCustomers extends ExportEntity {
                 for (JsonNode customerNode : customerArray) {
                     String strCustomerId = customerNode.get("id").get("id").asText();
                     addRelationToNode(relationsArray, strCustomerId, strFromType);
+
+
+                    Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strCustomerId);
+                    attributesOptional.ifPresent(jsonNode ->
+                            attributesArray.add(createNode(strFromType, strCustomerId, jsonNode, "attributes")));
                 }
                 writer.write(mapper.writeValueAsString(customerArray));
             }

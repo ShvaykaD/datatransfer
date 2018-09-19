@@ -23,7 +23,7 @@ public class ExportAssets extends ExportEntity {
         super(tbRestClient, mapper, basePath);
     }
 
-    public void getTenantAssets(ArrayNode relationsArray, ArrayNode telemetryArray, int limit) {
+    public void getTenantAssets(ArrayNode relationsArray, ArrayNode telemetryArray, ArrayNode attributesArray, int limit) {
         Optional<JsonNode> assetsOptional = tbRestClient.findTenantAssets(limit);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Assets.json")))) {
@@ -35,14 +35,18 @@ public class ExportAssets extends ExportEntity {
                     String strAssetId = assetNode.get("id").get("id").asText();
                     addRelationToNode(relationsArray, strAssetId, strFromType);
 
-                    StringBuilder keys = getTelemetryKeys(strFromType, strAssetId);
+                    StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strAssetId);
 
-                    if (keys != null && keys.length() != 0) {
+                    if (telemetryKeys != null && telemetryKeys.length() != 0) {
                         Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strAssetId,
-                                keys.toString(), limit, 0L, System.currentTimeMillis());
+                                telemetryKeys.toString(), limit, 0L, System.currentTimeMillis());
                         telemetryNodeOptional.ifPresent(jsonNode ->
-                                telemetryArray.add(createTelemetryNode(strFromType, strAssetId, jsonNode)));
+                                telemetryArray.add(createNode(strFromType, strAssetId, jsonNode, "telemetry")));
                     }
+
+                    Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strAssetId);
+                    attributesOptional.ifPresent(jsonNode ->
+                            attributesArray.add(createNode(strFromType, strAssetId, jsonNode, "attributes")));
                 }
                 writer.write(mapper.writeValueAsString(assetsArray));
             }
