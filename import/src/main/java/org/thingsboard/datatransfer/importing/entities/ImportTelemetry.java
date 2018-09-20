@@ -72,13 +72,18 @@ public class ImportTelemetry extends ImportEntity {
         }
     }
 
-    private EntityId getEntityId(LoadContext loadContext, JsonNode node,
-                                 String entityType) {
-        EntityId entityId;
-        if (entityType.equals("DEVICE")) {
-            entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
-        } else {
-            entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
+    private EntityId getEntityId(LoadContext loadContext, JsonNode node, String entityType) {
+        EntityId entityId = null;
+        switch (entityType) {
+            case "DEVICE":
+                entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
+                break;
+            case "ASSET":
+                entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
+                break;
+            case "CUSTOMER":
+                entityId = loadContext.getCustomerIdMap().get(node.get("entityId").asText());
+                break;
         }
         return entityId;
     }

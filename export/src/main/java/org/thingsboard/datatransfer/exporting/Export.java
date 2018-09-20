@@ -62,7 +62,7 @@ public class Export {
             new ExportEntity(tbRestClient, MAPPER, BASE_PATH);
 
             ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH);
-            customers.getTenantCustomers(relationsArray, attributesArray, LIMIT);
+            customers.getTenantCustomers(relationsArray, telemetryArray, attributesArray, LIMIT);
 
             ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH);
             devices.getTenantDevices(relationsArray, telemetryArray, attributesArray, LIMIT);

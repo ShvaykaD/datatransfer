@@ -57,9 +57,7 @@ public class ExportEntity {
             JsonNode jsonNode = attributesOptional.get();
             ObjectNode savedNode = createNode(strFromType, strEntityId, jsonNode, "attributes");
             Optional<JsonNode> attributesKeysByScopeOptional = tbRestClient.getAttributesKeysByScope(strFromType, strEntityId, "SERVER_SCOPE");
-            if (attributesKeysByScopeOptional.isPresent()) {
-                savedNode.set("attributeKeys", attributesKeysByScopeOptional.get());
-            }
+            attributesKeysByScopeOptional.ifPresent(node -> savedNode.set("attributeKeys", node));
             return savedNode;
         }
         return null;

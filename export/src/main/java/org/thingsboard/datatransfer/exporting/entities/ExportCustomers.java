@@ -20,7 +20,7 @@ public class ExportCustomers extends ExportEntity {
         super(tbRestClient, mapper, basePath);
     }
 
-    public void getTenantCustomers(ArrayNode relationsArray, ArrayNode attributesArray, int limit) {
+    public void getTenantCustomers(ArrayNode relationsArray, ArrayNode telemetryArray, ArrayNode attributesArray, int limit) {
         Optional<JsonNode> customersOptional = tbRestClient.findTenantCustomers(limit);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Customers.json")))) {
@@ -34,6 +34,14 @@ public class ExportCustomers extends ExportEntity {
                     ObjectNode attributesNode = getAttributes(strFromType, strCustomerId);
                     if (attributesNode != null) {
                         attributesArray.add(attributesNode);
+                    }
+                    StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strCustomerId);
+
+                    if (telemetryKeys != null && telemetryKeys.length() != 0) {
+                        Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strCustomerId,
+                                telemetryKeys.toString(), limit, 0L, System.currentTimeMillis());
+                        telemetryNodeOptional.ifPresent(jsonNode ->
+                                telemetryArray.add(createNode(strFromType, strCustomerId, jsonNode, "telemetry")));
                     }
                 }
                 writer.write(mapper.writeValueAsString(customerArray));
