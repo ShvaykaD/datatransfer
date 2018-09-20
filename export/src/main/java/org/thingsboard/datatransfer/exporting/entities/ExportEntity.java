@@ -51,25 +51,27 @@ public class ExportEntity {
         return null;
     }
 
-    ArrayNode getAttributes(ArrayNode attributesArray, String strFromType, String strEntityId) {
-        Optional<JsonNode> attributesKeysByScopeOptional = tbRestClient.getAttributesKeysByScope(strFromType, strEntityId, "SERVER_SCOPE");
+    ObjectNode getAttributes(String strFromType, String strEntityId) {
         Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strEntityId);
         if (attributesOptional.isPresent()) {
             JsonNode jsonNode = attributesOptional.get();
             ObjectNode savedNode = createNode(strFromType, strEntityId, jsonNode, "attributes");
-            attributesKeysByScopeOptional.ifPresent(jsonNode1 -> savedNode.set("attributeKeys", jsonNode1));
-            attributesArray.add(savedNode);
+            Optional<JsonNode> attributesKeysByScopeOptional = tbRestClient.getAttributesKeysByScope(strFromType, strEntityId, "SERVER_SCOPE");
+            if (attributesKeysByScopeOptional.isPresent()) {
+                savedNode.set("attributeKeys", attributesKeysByScopeOptional.get());
+            }
+            return savedNode;
         }
-        return attributesArray;
+        return null;
     }
 
 
     ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
-        ObjectNode telemetryNode = mapper.createObjectNode();
-        telemetryNode.put("entityType", strFromType);
-        telemetryNode.put("entityId", strEntityId);
-        telemetryNode.set(dataType, node);
-        return telemetryNode;
+        ObjectNode resultNode = mapper.createObjectNode();
+        resultNode.put("entityType", strFromType);
+        resultNode.put("entityId", strEntityId);
+        resultNode.set(dataType, node);
+        return resultNode;
     }
 
 

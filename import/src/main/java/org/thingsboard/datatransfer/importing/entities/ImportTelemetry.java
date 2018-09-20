@@ -24,7 +24,7 @@ import static org.thingsboard.datatransfer.importing.Import.TB_TOKEN;
 import static org.thingsboard.datatransfer.importing.Import.THRESHOLD;
 
 @Slf4j
-public class ImportTelemetry {
+public class ImportTelemetry extends ImportEntity {
 
     private final ObjectMapper mapper;
     private final String basePath;
@@ -88,38 +88,5 @@ public class ImportTelemetry {
         savingNode.set("ts", object.get("ts"));
         savingNode.set("values", mapper.createObjectNode().set(field, object.get("value")));
         return savingNode;
-    }
-
-    private void waitForPack(List<Future> resultList) {
-        try {
-            for (Future future : resultList) {
-                future.get();
-            }
-        } catch (Exception e) {
-            log.error("Failed to complete task", e);
-        }
-        resultList.clear();
-    }
-
-    private void retryUntilDone(Callable task) {
-        int tries = 0;
-        while (true) {
-            if (tries > 5) {
-                return;
-            }
-            try {
-                task.call();
-                return;
-            } catch (Throwable th) {
-                log.error("Task failed, repeat in 3 seconds", th);
-                try {
-                    TimeUnit.SECONDS.sleep(3);
-                } catch (InterruptedException e) {
-                    throw new IllegalStateException("Thread interrupted", e);
-                }
-            }
-            tries++;
-        }
-
     }
 }

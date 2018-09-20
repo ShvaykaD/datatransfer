@@ -2,7 +2,6 @@ package org.thingsboard.datatransfer.importing.entities;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
@@ -15,25 +14,21 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.datatransfer.importing.Import.*;
 
 @Slf4j
-public class ImportAttributes {
+public class ImportAttributes extends ImportEntity {
 
     private final ObjectMapper mapper;
     private final String basePath;
     private final Client httpClient;
-    private final RestClient tbRestClient;
 
-    public ImportAttributes(ObjectMapper mapper, String basePath, Client httpClient, RestClient tbRestClient) {
+    public ImportAttributes(ObjectMapper mapper, String basePath, Client httpClient) {
         this.mapper = mapper;
         this.basePath = basePath;
         this.httpClient = httpClient;
-        this.tbRestClient = tbRestClient;
     }
 
     public void saveAttributes(LoadContext loadContext) {
@@ -107,39 +102,6 @@ public class ImportAttributes {
         ObjectNode savingNode = mapper.createObjectNode();
         savingNode.set(object.get("key").asText(), object.get("value"));
         return savingNode;
-    }
-
-    private void waitForPack(List<Future> resultList) {
-        try {
-            for (Future future : resultList) {
-                future.get();
-            }
-        } catch (Exception e) {
-            log.error("Failed to complete task", e);
-        }
-        resultList.clear();
-    }
-
-    private void retryUntilDone(Callable task) {
-        int tries = 0;
-        while (true) {
-            if (tries > 5) {
-                return;
-            }
-            try {
-                task.call();
-                return;
-            } catch (Throwable th) {
-                log.error("Task failed, repeat in 3 seconds", th);
-                try {
-                    TimeUnit.SECONDS.sleep(3);
-                } catch (InterruptedException e) {
-                    throw new IllegalStateException("Thread interrupted", e);
-                }
-            }
-            tries++;
-        }
-
     }
 
 }

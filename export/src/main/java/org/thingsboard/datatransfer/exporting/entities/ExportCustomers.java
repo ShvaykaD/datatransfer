@@ -31,7 +31,10 @@ public class ExportCustomers extends ExportEntity {
                 for (JsonNode customerNode : customerArray) {
                     String strCustomerId = customerNode.get("id").get("id").asText();
                     addRelationToNode(relationsArray, strCustomerId, strFromType);
-                    attributesArray = getAttributes(attributesArray, strFromType, strCustomerId);
+                    ObjectNode attributesNode = getAttributes(strFromType, strCustomerId);
+                    if (attributesNode != null) {
+                        attributesArray.add(attributesNode);
+                    }
                 }
                 writer.write(mapper.writeValueAsString(customerArray));
             }

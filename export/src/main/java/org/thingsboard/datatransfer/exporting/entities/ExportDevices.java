@@ -43,7 +43,10 @@ public class ExportDevices extends ExportEntity {
                         telemetryNodeOptional.ifPresent(jsonNode ->
                                 telemetryArray.add(createNode(strFromType, strDeviceId, jsonNode, "telemetry")));
                     }
-                    attributesArray = getAttributes(attributesArray, strFromType, strDeviceId);
+                    ObjectNode attributesNode = getAttributes(strFromType, strDeviceId);
+                    if (attributesNode != null) {
+                        attributesArray.add(attributesNode);
+                    }
                 }
                 writer.write(mapper.writeValueAsString(deviceArray));
             }

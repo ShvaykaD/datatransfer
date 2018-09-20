@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import sun.invoke.empty.Empty;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -44,9 +45,10 @@ public class ExportAssets extends ExportEntity {
                         telemetryNodeOptional.ifPresent(jsonNode ->
                                 telemetryArray.add(createNode(strFromType, strAssetId, jsonNode, "telemetry")));
                     }
-
-                    attributesArray = getAttributes(attributesArray, strFromType, strAssetId);
-
+                    ObjectNode attributesNode = getAttributes(strFromType, strAssetId);
+                    if (attributesNode != null) {
+                        attributesArray.add(attributesNode);
+                    }
                 }
                 writer.write(mapper.writeValueAsString(assetsArray));
             }

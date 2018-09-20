@@ -67,10 +67,10 @@ public class Import {
             ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, emptyDb);
             assets.saveTenantAssets(LOAD_CONTEXT);
 
-//            ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
-//            telemetry.saveTelemetry(LOAD_CONTEXT);
+            ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
+            telemetry.saveTelemetry(LOAD_CONTEXT);
 
-            ImportAttributes attributes = new ImportAttributes(mapper, BASE_PATH, httpClient, tbRestClient);
+            ImportAttributes attributes = new ImportAttributes(mapper, BASE_PATH, httpClient);
             attributes.saveAttributes(LOAD_CONTEXT);
 
             importRelations(mapper, tbRestClient);
