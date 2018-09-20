@@ -47,22 +47,23 @@ public class ImportTelemetry {
         if (jsonNode != null) {
             List<Future> resultList = new ArrayList<>();
             for (JsonNode node : jsonNode) {
-                resultList.add(EXECUTOR_SERVICE.submit(() -> retryUntilDone(() -> {
-                    JsonNode telemetryNode = node.get("telemetry");
-                    for (Iterator<String> iterator = telemetryNode.fieldNames(); iterator.hasNext(); ) {
-                        String field = iterator.next();
-                        JsonNode fieldArray = telemetryNode.get(field);
-                        for (JsonNode object : fieldArray) {
+                JsonNode telemetryNode = node.get("telemetry");
+                for (Iterator<String> iterator = telemetryNode.fieldNames(); iterator.hasNext(); ) {
+                    String field = iterator.next();
+                    JsonNode fieldArray = telemetryNode.get(field);
+                    for (JsonNode object : fieldArray) {
+                        resultList.add(EXECUTOR_SERVICE.submit(() -> retryUntilDone(() -> {
                             ObjectNode savingNode = createSavingNode(field, object);
                             String entityType = node.get("entityType").asText();
                             EntityId entityId = getEntityId(loadContext, node, entityType);
                             log.info("Pushing telemetry to {} [{}]", entityType, entityId);
                             httpClient.sendData(TB_BASE_URL + "/api/plugins/telemetry/" + entityType + "/" +
                                     entityId.toString() + "/timeseries/data", savingNode, TB_TOKEN);
-                        }
+                            return true;
+                        })));
                     }
-                    return true;
-                })));
+                }
+
                 if (resultList.size() > THRESHOLD) {
                     waitForPack(resultList);
                 }

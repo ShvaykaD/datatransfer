@@ -3,6 +3,7 @@ package org.thingsboard.datatransfer.exporting.entities;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 
@@ -30,11 +31,7 @@ public class ExportCustomers extends ExportEntity {
                 for (JsonNode customerNode : customerArray) {
                     String strCustomerId = customerNode.get("id").get("id").asText();
                     addRelationToNode(relationsArray, strCustomerId, strFromType);
-
-
-                    Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strCustomerId);
-                    attributesOptional.ifPresent(jsonNode ->
-                            attributesArray.add(createNode(strFromType, strCustomerId, jsonNode, "attributes")));
+                    attributesArray = getAttributes(attributesArray, strFromType, strCustomerId);
                 }
                 writer.write(mapper.writeValueAsString(customerArray));
             }

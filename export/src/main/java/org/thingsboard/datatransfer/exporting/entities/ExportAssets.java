@@ -7,6 +7,7 @@ package org.thingsboard.datatransfer.exporting.entities;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 
@@ -44,9 +45,8 @@ public class ExportAssets extends ExportEntity {
                                 telemetryArray.add(createNode(strFromType, strAssetId, jsonNode, "telemetry")));
                     }
 
-                    Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strAssetId);
-                    attributesOptional.ifPresent(jsonNode ->
-                            attributesArray.add(createNode(strFromType, strAssetId, jsonNode, "attributes")));
+                    attributesArray = getAttributes(attributesArray, strFromType, strAssetId);
+
                 }
                 writer.write(mapper.writeValueAsString(assetsArray));
             }

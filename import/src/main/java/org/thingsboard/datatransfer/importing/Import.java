@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.importing.entities.ImportAssets;
-import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
-import org.thingsboard.datatransfer.importing.entities.ImportDevices;
-import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
+import org.thingsboard.datatransfer.importing.entities.*;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -70,8 +67,11 @@ public class Import {
             ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, emptyDb);
             assets.saveTenantAssets(LOAD_CONTEXT);
 
-            ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
-            telemetry.saveTelemetry(LOAD_CONTEXT);
+//            ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
+//            telemetry.saveTelemetry(LOAD_CONTEXT);
+
+            ImportAttributes attributes = new ImportAttributes(mapper, BASE_PATH, httpClient, tbRestClient);
+            attributes.saveAttributes(LOAD_CONTEXT);
 
             importRelations(mapper, tbRestClient);
             log.info("Ended importing successfully!");

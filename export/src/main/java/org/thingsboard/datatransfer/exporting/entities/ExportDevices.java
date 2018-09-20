@@ -43,10 +43,7 @@ public class ExportDevices extends ExportEntity {
                         telemetryNodeOptional.ifPresent(jsonNode ->
                                 telemetryArray.add(createNode(strFromType, strDeviceId, jsonNode, "telemetry")));
                     }
-                    Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strDeviceId);
-                    attributesOptional.ifPresent(jsonNode ->
-                            attributesArray.add(createNode(strFromType, strDeviceId, jsonNode, "attributes")));
-
+                    attributesArray = getAttributes(attributesArray, strFromType, strDeviceId);
                 }
                 writer.write(mapper.writeValueAsString(deviceArray));
             }
@@ -54,6 +51,7 @@ public class ExportDevices extends ExportEntity {
             log.warn("Could not export devices to file.");
         }
     }
+
 
     private void addDeviceCredentialsToDeviceNode(ObjectNode deviceNode, String strDeviceId) {
         DeviceCredentials deviceCredentials = tbRestClient.getCredentials(new DeviceId(UUID.fromString(strDeviceId)));
