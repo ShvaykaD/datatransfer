@@ -1,6 +1,9 @@
 package org.thingsboard.datatransfer.importing.entities;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.datatransfer.importing.LoadContext;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -41,6 +44,24 @@ abstract class ImportEntity {
             tries++;
         }
 
+    }
+
+    EntityId getEntityId(LoadContext loadContext, JsonNode node, String entityType) {
+        EntityId entityId = null;
+        switch (entityType) {
+            case "DEVICE":
+                entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
+                break;
+            case "ASSET":
+                entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
+                break;
+            case "CUSTOMER":
+                entityId = loadContext.getCustomerIdMap().get(node.get("entityId").asText());
+                break;
+            default:
+                log.warn("Entity type is not supported: {}", entityType);
+        }
+        return entityId;
     }
 
 }

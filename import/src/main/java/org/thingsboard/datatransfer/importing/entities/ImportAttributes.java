@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.Client;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -16,7 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import static org.thingsboard.datatransfer.importing.Import.*;
+import static org.thingsboard.datatransfer.importing.Import.EXECUTOR_SERVICE;
+import static org.thingsboard.datatransfer.importing.Import.TB_BASE_URL;
+import static org.thingsboard.datatransfer.importing.Import.TB_TOKEN;
+import static org.thingsboard.datatransfer.importing.Import.THRESHOLD;
 
 @Slf4j
 public class ImportAttributes extends ImportEntity {
@@ -78,24 +80,6 @@ public class ImportAttributes extends ImportEntity {
             }
         }
         return false;
-    }
-
-    private EntityId getEntityId(LoadContext loadContext, JsonNode node, String entityType) {
-        EntityId entityId = null;
-        switch (entityType) {
-            case "DEVICE":
-                entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
-                break;
-            case "ASSET":
-                entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
-                break;
-            case "CUSTOMER":
-                entityId = loadContext.getCustomerIdMap().get(node.get("entityId").asText());
-                break;
-            default:
-                log.warn("Entity type is not supported: {}", entityType);
-        }
-        return entityId;
     }
 
     private ObjectNode createSavingNode(JsonNode object) {

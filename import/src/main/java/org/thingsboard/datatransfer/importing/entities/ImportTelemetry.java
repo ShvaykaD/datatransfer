@@ -14,9 +14,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.datatransfer.importing.Import.EXECUTOR_SERVICE;
 import static org.thingsboard.datatransfer.importing.Import.TB_BASE_URL;
@@ -72,21 +70,6 @@ public class ImportTelemetry extends ImportEntity {
         }
     }
 
-    private EntityId getEntityId(LoadContext loadContext, JsonNode node, String entityType) {
-        EntityId entityId = null;
-        switch (entityType) {
-            case "DEVICE":
-                entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
-                break;
-            case "ASSET":
-                entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
-                break;
-            case "CUSTOMER":
-                entityId = loadContext.getCustomerIdMap().get(node.get("entityId").asText());
-                break;
-        }
-        return entityId;
-    }
 
     private ObjectNode createSavingNode(String field, JsonNode object) {
         ObjectNode savingNode = mapper.createObjectNode();
