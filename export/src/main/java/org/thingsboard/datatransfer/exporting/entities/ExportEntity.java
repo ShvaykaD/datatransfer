@@ -51,11 +51,26 @@ public class ExportEntity {
         return null;
     }
 
-    ObjectNode createTelemetryNode(String strFromType, String strEntityId, JsonNode node) {
-        ObjectNode telemetryNode = mapper.createObjectNode();
-        telemetryNode.put("entityType", strFromType);
-        telemetryNode.put("entityId", strEntityId);
-        telemetryNode.set("telemetry", node);
-        return telemetryNode;
+    ObjectNode getAttributes(String strFromType, String strEntityId) {
+        Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strEntityId);
+        if (attributesOptional.isPresent()) {
+            JsonNode jsonNode = attributesOptional.get();
+            ObjectNode savedNode = createNode(strFromType, strEntityId, jsonNode, "attributes");
+            Optional<JsonNode> attributesKeysByScopeOptional = tbRestClient.getAttributesKeysByScope(strFromType, strEntityId, "SERVER_SCOPE");
+            attributesKeysByScopeOptional.ifPresent(node -> savedNode.set("attributeKeys", node));
+            return savedNode;
+        }
+        return null;
     }
+
+
+    ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
+        ObjectNode resultNode = mapper.createObjectNode();
+        resultNode.put("entityType", strFromType);
+        resultNode.put("entityId", strEntityId);
+        resultNode.set(dataType, node);
+        return resultNode;
+    }
+
+
 }

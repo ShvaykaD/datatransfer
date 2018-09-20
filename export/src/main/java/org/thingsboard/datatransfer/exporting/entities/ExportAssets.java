@@ -7,8 +7,10 @@ package org.thingsboard.datatransfer.exporting.entities;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import sun.invoke.empty.Empty;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,7 +25,7 @@ public class ExportAssets extends ExportEntity {
         super(tbRestClient, mapper, basePath);
     }
 
-    public void getTenantAssets(ArrayNode relationsArray, ArrayNode telemetryArray, int limit) {
+    public void getTenantAssets(ArrayNode relationsArray, ArrayNode telemetryArray, ArrayNode attributesArray, int limit) {
         Optional<JsonNode> assetsOptional = tbRestClient.findTenantAssets(limit);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Assets.json")))) {
@@ -35,13 +37,17 @@ public class ExportAssets extends ExportEntity {
                     String strAssetId = assetNode.get("id").get("id").asText();
                     addRelationToNode(relationsArray, strAssetId, strFromType);
 
-                    StringBuilder keys = getTelemetryKeys(strFromType, strAssetId);
+                    StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strAssetId);
 
-                    if (keys != null && keys.length() != 0) {
+                    if (telemetryKeys != null && telemetryKeys.length() != 0) {
                         Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strAssetId,
-                                keys.toString(), limit, 0L, System.currentTimeMillis());
+                                telemetryKeys.toString(), limit, 0L, System.currentTimeMillis());
                         telemetryNodeOptional.ifPresent(jsonNode ->
-                                telemetryArray.add(createTelemetryNode(strFromType, strAssetId, jsonNode)));
+                                telemetryArray.add(createNode(strFromType, strAssetId, jsonNode, "telemetry")));
+                    }
+                    ObjectNode attributesNode = getAttributes(strFromType, strAssetId);
+                    if (attributesNode != null) {
+                        attributesArray.add(attributesNode);
                     }
                 }
                 writer.write(mapper.writeValueAsString(assetsArray));

@@ -24,7 +24,7 @@ import static org.thingsboard.datatransfer.importing.Import.TB_TOKEN;
 import static org.thingsboard.datatransfer.importing.Import.THRESHOLD;
 
 @Slf4j
-public class ImportTelemetry {
+public class ImportTelemetry extends ImportEntity {
 
     private final ObjectMapper mapper;
     private final String basePath;
@@ -47,22 +47,23 @@ public class ImportTelemetry {
         if (jsonNode != null) {
             List<Future> resultList = new ArrayList<>();
             for (JsonNode node : jsonNode) {
-                resultList.add(EXECUTOR_SERVICE.submit(() -> retryUntilDone(() -> {
-                    JsonNode telemetryNode = node.get("telemetry");
-                    for (Iterator<String> iterator = telemetryNode.fieldNames(); iterator.hasNext(); ) {
-                        String field = iterator.next();
-                        JsonNode fieldArray = telemetryNode.get(field);
-                        for (JsonNode object : fieldArray) {
+                JsonNode telemetryNode = node.get("telemetry");
+                for (Iterator<String> iterator = telemetryNode.fieldNames(); iterator.hasNext(); ) {
+                    String field = iterator.next();
+                    JsonNode fieldArray = telemetryNode.get(field);
+                    for (JsonNode object : fieldArray) {
+                        resultList.add(EXECUTOR_SERVICE.submit(() -> retryUntilDone(() -> {
                             ObjectNode savingNode = createSavingNode(field, object);
                             String entityType = node.get("entityType").asText();
                             EntityId entityId = getEntityId(loadContext, node, entityType);
                             log.info("Pushing telemetry to {} [{}]", entityType, entityId);
                             httpClient.sendData(TB_BASE_URL + "/api/plugins/telemetry/" + entityType + "/" +
                                     entityId.toString() + "/timeseries/data", savingNode, TB_TOKEN);
-                        }
+                            return true;
+                        })));
                     }
-                    return true;
-                })));
+                }
+
                 if (resultList.size() > THRESHOLD) {
                     waitForPack(resultList);
                 }
@@ -71,13 +72,18 @@ public class ImportTelemetry {
         }
     }
 
-    private EntityId getEntityId(LoadContext loadContext, JsonNode node,
-                                 String entityType) {
-        EntityId entityId;
-        if (entityType.equals("DEVICE")) {
-            entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
-        } else {
-            entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
+    private EntityId getEntityId(LoadContext loadContext, JsonNode node, String entityType) {
+        EntityId entityId = null;
+        switch (entityType) {
+            case "DEVICE":
+                entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
+                break;
+            case "ASSET":
+                entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
+                break;
+            case "CUSTOMER":
+                entityId = loadContext.getCustomerIdMap().get(node.get("entityId").asText());
+                break;
         }
         return entityId;
     }
@@ -87,38 +93,5 @@ public class ImportTelemetry {
         savingNode.set("ts", object.get("ts"));
         savingNode.set("values", mapper.createObjectNode().set(field, object.get("value")));
         return savingNode;
-    }
-
-    private void waitForPack(List<Future> resultList) {
-        try {
-            for (Future future : resultList) {
-                future.get();
-            }
-        } catch (Exception e) {
-            log.error("Failed to complete task", e);
-        }
-        resultList.clear();
-    }
-
-    private void retryUntilDone(Callable task) {
-        int tries = 0;
-        while (true) {
-            if (tries > 5) {
-                return;
-            }
-            try {
-                task.call();
-                return;
-            } catch (Throwable th) {
-                log.error("Task failed, repeat in 3 seconds", th);
-                try {
-                    TimeUnit.SECONDS.sleep(3);
-                } catch (InterruptedException e) {
-                    throw new IllegalStateException("Thread interrupted", e);
-                }
-            }
-            tries++;
-        }
-
     }
 }

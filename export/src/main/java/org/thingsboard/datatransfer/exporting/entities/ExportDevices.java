@@ -23,7 +23,7 @@ public class ExportDevices extends ExportEntity {
         super(tbRestClient, mapper, basePath);
     }
 
-    public void getTenantDevices(ArrayNode relationsArray, ArrayNode telemetryArray, int limit) {
+    public void getTenantDevices(ArrayNode relationsArray, ArrayNode telemetryArray, ArrayNode attributesArray, int limit) {
         Optional<JsonNode> devicesOptional = tbRestClient.findTenantDevices(limit);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Devices.json")))) {
@@ -35,13 +35,17 @@ public class ExportDevices extends ExportEntity {
                     addRelationToNode(relationsArray, strDeviceId, strFromType);
                     addDeviceCredentialsToDeviceNode((ObjectNode) deviceNode, strDeviceId);
 
-                    StringBuilder keys = getTelemetryKeys(strFromType, strDeviceId);
+                    StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strDeviceId);
 
-                    if (keys != null && keys.length() != 0) {
+                    if (telemetryKeys != null && telemetryKeys.length() != 0) {
                         Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strDeviceId,
-                                keys.toString(), limit, 0L, System.currentTimeMillis());
+                                telemetryKeys.toString(), limit, 0L, System.currentTimeMillis());
                         telemetryNodeOptional.ifPresent(jsonNode ->
-                                telemetryArray.add(createTelemetryNode(strFromType, strDeviceId, jsonNode)));
+                                telemetryArray.add(createNode(strFromType, strDeviceId, jsonNode, "telemetry")));
+                    }
+                    ObjectNode attributesNode = getAttributes(strFromType, strDeviceId);
+                    if (attributesNode != null) {
+                        attributesArray.add(attributesNode);
                     }
                 }
                 writer.write(mapper.writeValueAsString(deviceArray));
@@ -50,6 +54,7 @@ public class ExportDevices extends ExportEntity {
             log.warn("Could not export devices to file.");
         }
     }
+
 
     private void addDeviceCredentialsToDeviceNode(ObjectNode deviceNode, String strDeviceId) {
         DeviceCredentials deviceCredentials = tbRestClient.getCredentials(new DeviceId(UUID.fromString(strDeviceId)));
