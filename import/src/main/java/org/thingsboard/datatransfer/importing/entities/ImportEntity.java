@@ -58,6 +58,9 @@ abstract class ImportEntity {
             case "CUSTOMER":
                 entityId = loadContext.getCustomerIdMap().get(node.get("entityId").asText());
                 break;
+            case "ENTITY_GROUP":
+                entityId = loadContext.getEntityGroupIdMap().get(node.get("entityId").asText());
+                break;
             default:
                 log.warn("Entity type is not supported: {}", entityType);
         }

@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.exporting.entities.ExportAssets;
 import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
+import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
 import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
 import org.thingsboard.datatransfer.exporting.entities.ExportEntity;
+import org.thingsboard.datatransfer.exporting.entities.ExportEntityGroups;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,6 +26,7 @@ import java.util.concurrent.Executors;
 public class Export {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final SaveContext SAVE_CONTEXT = new SaveContext();
 
     public static String BASE_PATH;
     public static String TB_BASE_URL;
@@ -34,9 +37,6 @@ public class Export {
     public static ExecutorService EXECUTOR_SERVICE;
 
     public static void main(String[] args) {
-        ArrayNode relationsArray = MAPPER.createArrayNode();
-        ArrayNode telemetryArray = MAPPER.createArrayNode();
-        ArrayNode attributesArray = MAPPER.createArrayNode();
         Properties properties = new Properties();
         String filename;
         if (args.length > 0) {
@@ -52,6 +52,7 @@ public class Export {
 
             BASE_PATH = properties.getProperty("basePath");
             LIMIT = Integer.parseInt(properties.getProperty("limit"));
+            boolean isPe = Boolean.parseBoolean(properties.getProperty("isPe"));
 
             TB_BASE_URL = properties.getProperty("tbBaseURL");
             RestClient tbRestClient = new RestClient(TB_BASE_URL);
@@ -59,20 +60,30 @@ public class Export {
             TB_TOKEN = tbRestClient.getToken();
 
             log.info("Start exporting...");
-            new ExportEntity(tbRestClient, MAPPER, BASE_PATH);
+            new ExportEntity(tbRestClient, MAPPER, BASE_PATH, isPe);
 
-            ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH);
-            customers.getTenantCustomers(relationsArray, telemetryArray, attributesArray, LIMIT);
+            ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH, isPe);
+            customers.getTenantCustomers(SAVE_CONTEXT, LIMIT);
 
-            ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH);
-            devices.getTenantDevices(relationsArray, telemetryArray, attributesArray, LIMIT);
+            ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH, isPe);
+            devices.getTenantDevices(SAVE_CONTEXT, LIMIT);
 
-            ExportAssets assets = new ExportAssets(tbRestClient, MAPPER, BASE_PATH);
-            assets.getTenantAssets(relationsArray, telemetryArray, attributesArray, LIMIT);
+            ExportAssets assets = new ExportAssets(tbRestClient, MAPPER, BASE_PATH, isPe);
+            assets.getTenantAssets(SAVE_CONTEXT, LIMIT);
 
-            writeToFile("Relations.json", relationsArray);
-            writeToFile("Telemetry.json", telemetryArray);
-            writeToFile("Attributes.json", attributesArray);
+            if (isPe) {
+                ExportEntityGroups entityGroups = new ExportEntityGroups(tbRestClient, MAPPER, BASE_PATH);
+                entityGroups.getEntityGroups(SAVE_CONTEXT, LIMIT);
+            }
+
+            ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);
+            dashboards.getTenantDashboards(SAVE_CONTEXT, LIMIT);
+
+            writeToFile("Relations.json", SAVE_CONTEXT.getRelationsArray());
+            writeToFile("Telemetry.json", SAVE_CONTEXT.getTelemetryArray());
+            writeToFile("Attributes.json", SAVE_CONTEXT.getAttributesArray());
+            writeToFile("EntityGroups.json", SAVE_CONTEXT.getEntityGroups());
+            writeToFile("EntitiesInGroups.json", SAVE_CONTEXT.getEntitiesInGroups());
 
             log.info("Ended exporting successfully!");
             EXECUTOR_SERVICE.shutdown();

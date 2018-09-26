@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import sun.invoke.empty.Empty;
+import org.thingsboard.datatransfer.exporting.SaveContext;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,21 +21,20 @@ import java.util.Optional;
 @Slf4j
 public class ExportAssets extends ExportEntity {
 
-    public ExportAssets(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath);
+    public ExportAssets(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean isPe) {
+        super(tbRestClient, mapper, basePath, isPe);
     }
 
-    public void getTenantAssets(ArrayNode relationsArray, ArrayNode telemetryArray, ArrayNode attributesArray, int limit) {
+    public void getTenantAssets(SaveContext saveContext, int limit) {
         Optional<JsonNode> assetsOptional = tbRestClient.findTenantAssets(limit);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Assets.json")))) {
             if (assetsOptional.isPresent()) {
                 ArrayNode assetsArray = (ArrayNode) assetsOptional.get().get("data");
-
                 String strFromType = "ASSET";
                 for (JsonNode assetNode : assetsArray) {
                     String strAssetId = assetNode.get("id").get("id").asText();
-                    addRelationToNode(relationsArray, strAssetId, strFromType);
+                    addRelationToNode(saveContext.getRelationsArray(), strAssetId, strFromType);
 
                     StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strAssetId);
 
@@ -43,11 +42,11 @@ public class ExportAssets extends ExportEntity {
                         Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strAssetId,
                                 telemetryKeys.toString(), limit, 0L, System.currentTimeMillis());
                         telemetryNodeOptional.ifPresent(jsonNode ->
-                                telemetryArray.add(createNode(strFromType, strAssetId, jsonNode, "telemetry")));
+                                saveContext.getTelemetryArray().add(createNode(strFromType, strAssetId, jsonNode, "telemetry")));
                     }
                     ObjectNode attributesNode = getAttributes(strFromType, strAssetId);
                     if (attributesNode != null) {
-                        attributesArray.add(attributesNode);
+                        saveContext.getAttributesArray().add(attributesNode);
                     }
                 }
                 writer.write(mapper.writeValueAsString(assetsArray));

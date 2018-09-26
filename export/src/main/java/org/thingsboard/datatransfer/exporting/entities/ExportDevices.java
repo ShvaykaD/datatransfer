@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.SaveContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
@@ -19,11 +20,14 @@ import java.util.UUID;
 @Slf4j
 public class ExportDevices extends ExportEntity {
 
-    public ExportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath);
+    private final boolean isPe;
+
+    public ExportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean isPe) {
+        super(tbRestClient, mapper, basePath, isPe);
+        this.isPe = isPe;
     }
 
-    public void getTenantDevices(ArrayNode relationsArray, ArrayNode telemetryArray, ArrayNode attributesArray, int limit) {
+    public void getTenantDevices(SaveContext saveContext, int limit) {
         Optional<JsonNode> devicesOptional = tbRestClient.findTenantDevices(limit);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Devices.json")))) {
@@ -32,7 +36,7 @@ public class ExportDevices extends ExportEntity {
                 String strFromType = "DEVICE";
                 for (JsonNode deviceNode : deviceArray) {
                     String strDeviceId = deviceNode.get("id").get("id").asText();
-                    addRelationToNode(relationsArray, strDeviceId, strFromType);
+                    addRelationToNode(saveContext.getRelationsArray(), strDeviceId, strFromType);
                     addDeviceCredentialsToDeviceNode((ObjectNode) deviceNode, strDeviceId);
 
                     StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strDeviceId);
@@ -41,11 +45,11 @@ public class ExportDevices extends ExportEntity {
                         Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strDeviceId,
                                 telemetryKeys.toString(), limit, 0L, System.currentTimeMillis());
                         telemetryNodeOptional.ifPresent(jsonNode ->
-                                telemetryArray.add(createNode(strFromType, strDeviceId, jsonNode, "telemetry")));
+                                saveContext.getTelemetryArray().add(createNode(strFromType, strDeviceId, jsonNode, "telemetry")));
                     }
                     ObjectNode attributesNode = getAttributes(strFromType, strDeviceId);
                     if (attributesNode != null) {
-                        attributesArray.add(attributesNode);
+                        saveContext.getAttributesArray().add(attributesNode);
                     }
                 }
                 writer.write(mapper.writeValueAsString(deviceArray));

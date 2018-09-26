@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.SaveContext;
 
 import java.util.Optional;
 
@@ -15,11 +16,13 @@ public class ExportEntity {
     final RestClient tbRestClient;
     final ObjectMapper mapper;
     final String basePath;
+    private final boolean isPe;
 
-    public ExportEntity(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
+    public ExportEntity(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean isPe) {
         this.tbRestClient = tbRestClient;
         this.mapper = mapper;
         this.basePath = basePath;
+        this.isPe = isPe;
     }
 
     void addRelationToNode(ArrayNode relationsArray, String strEntityId, String strFromType) {
@@ -72,5 +75,24 @@ public class ExportEntity {
         return resultNode;
     }
 
+    /*void addEntityGroups(SaveContext saveContext, String strFromType, int limit) {
+        if (isPe) {
+            Optional<JsonNode> assetEntityGroupsOptional = tbRestClient.getTenantEntityGroups(strFromType);
+            assetEntityGroupsOptional.ifPresent(jsonNode -> {
+                for (JsonNode node : jsonNode) {
+                    saveContext.getEntityGroups().add(node);
+                    if (!node.get("name").asText().equals("All")) {
+                        Optional<JsonNode> entitiesOptional = tbRestClient.getTenantEntities(node.get("id").get("id").asText(), limit);
+                        if (entitiesOptional.isPresent()) {
+                            ObjectNode savedEntitiesNode = mapper.createObjectNode();
+                            savedEntitiesNode.put("entityGroupId", node.get("id").get("id").asText());
+                            savedEntitiesNode.setAll((ObjectNode) entitiesOptional.get());
+                            saveContext.getEntitiesInGroups().add(savedEntitiesNode);
+                        }
+                    }
+                }
+            });
+        }
+    }*/
 
 }

@@ -49,7 +49,7 @@ public class ImportDevices {
                 Device device = createDevice(node);
                 loadContext.getDeviceIdMap().put(node.get("id").get("id").asText(), device.getId());
 
-                assignDeviceToCustomer(loadContext.getCustomerIdMap(), node, device);
+                assignDeviceToCustomer(loadContext, node, device);
                 createCredentialsForDevice(node, device);
             }
         }
@@ -67,11 +67,11 @@ public class ImportDevices {
         tbRestClient.saveDeviceCredentials(deviceCredentialsOptional);
     }
 
-    private void assignDeviceToCustomer(Map<String, CustomerId> customerIdMap, JsonNode node, Device savedDevice) {
+    private void assignDeviceToCustomer(LoadContext loadContext, JsonNode node, Device savedDevice) {
         String strCustomerId = node.get("customerId").get("id").asText();
         if (!strCustomerId.equals(NULL_UUID)) {
-            if (customerIdMap.containsKey(strCustomerId)) {
-                tbRestClient.assignDevice(customerIdMap.get(strCustomerId), savedDevice.getId());
+            if (loadContext.getCustomerIdMap().containsKey(strCustomerId)) {
+                tbRestClient.assignDevice(loadContext.getCustomerIdMap().get(strCustomerId), savedDevice.getId());
             } else {
                 tbRestClient.assignDeviceToPublicCustomer(savedDevice.getId());
             }
