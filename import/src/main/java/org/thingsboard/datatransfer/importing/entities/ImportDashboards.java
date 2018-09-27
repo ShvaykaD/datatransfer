@@ -74,83 +74,81 @@ public class ImportDashboards {
     }
 
     private void changeAliasConfiguration(LoadContext loadContext, JsonNode aliasNode) {
-        ObjectNode node = (ObjectNode) aliasNode.get("filter");
-        ObjectNode objectNode;
-        String entityType;
         ArrayNode arrayNode;
-        switch (node.get("type").asText()) {
-            case "entityName":
-                break;
-            case "entityGroupName":
+        ObjectNode filterNode = (ObjectNode) aliasNode.get("filter");
+        String aliasType = filterNode.get("type").asText();
+        switch (aliasType) {
+            case "entityGroup":
+                filterNode.put(aliasType, loadContext.getEntityGroupIdMap().get(filterNode.get(aliasType).asText()).toString());
                 break;
             case "singleEntity":
-                objectNode = (ObjectNode) node.get("singleEntity");
-                entityType = objectNode.get("entityType").asText();
-                switchEntityType(loadContext, objectNode, entityType);
+                changeEntityId(loadContext, (ObjectNode) filterNode.get(aliasType));
                 break;
             case "entityList":
-                entityType = node.get("entityType").asText();
-                switch (entityType) {
-                    case "DEVICE":
-                        arrayNode = mapper.createArrayNode();
-                        for (JsonNode entityId : node.get("entityList")) {
-                            arrayNode.add(loadContext.getDeviceIdMap().get(entityId.asText()).toString());
-                        }
-                        node.set("entityList", arrayNode);
-                        break;
-                    case "ASSET":
-                        arrayNode = mapper.createArrayNode();
-                        for (JsonNode entityId : node.get("entityList")) {
-                            arrayNode.add(loadContext.getAssetIdMap().get(entityId.asText()).toString());
-                        }
-                        node.set("entityList", arrayNode);
-                        break;
-                    case "CUSTOMER":
-                        arrayNode = mapper.createArrayNode();
-                        for (JsonNode entityId : node.get("entityList")) {
-                            arrayNode.add(loadContext.getCustomerIdMap().get(entityId.asText()).toString());
-                        }
-                        node.set("entityList", arrayNode);
-                        break;
+                arrayNode = mapper.createArrayNode();
+                for (JsonNode entityId : filterNode.get(aliasType)) {
+                    String strEntityId = getNewEntityId(filterNode.get("entityType").asText(), loadContext, entityId);
+                    if (strEntityId != null) {
+                        arrayNode.add(strEntityId);
+                    }
                 }
+                filterNode.set(aliasType, arrayNode);
                 break;
             case "entityGroupList":
                 arrayNode = mapper.createArrayNode();
-                for (JsonNode entityId : node.get("entityGroupList")) {
+                for (JsonNode entityId : filterNode.get(aliasType)) {
                     arrayNode.add(loadContext.getEntityGroupIdMap().get(entityId.asText()).toString());
                 }
-                node.set("entityList", arrayNode);
+                filterNode.set(aliasType, arrayNode);
                 break;
             case "stateEntity":
-                objectNode = (ObjectNode) node.get("defaultStateEntity");
-                entityType = objectNode.get("entityType").asText();
-                switchEntityType(loadContext, objectNode, entityType);
+                changeEntityId(loadContext, (ObjectNode) filterNode.get("defaultStateEntity"));
                 break;
             case "relationsQuery":
-                if (!node.get("defaultStateEntity").isNull()) {
-                    objectNode = (ObjectNode) node.get("defaultStateEntity");
+            case "assetSearchQuery":
+            case "deviceSearchQuery":
+                ObjectNode objectNode;
+                if (!filterNode.get("defaultStateEntity").isNull()) {
+                    objectNode = (ObjectNode) filterNode.get("defaultStateEntity");
                 } else {
-                    objectNode = (ObjectNode) node.get("rootEntity");
+                    objectNode = (ObjectNode) filterNode.get("rootEntity");
                 }
-                entityType = objectNode.get("entityType").asText();
-                switchEntityType(loadContext, objectNode, entityType);
+                changeEntityId(loadContext, objectNode);
                 break;
             default:
-                log.warn("Such alias type is not supported!");
+                log.warn("Such alias type [{}] is not supported!", aliasType);
         }
     }
 
-    private void switchEntityType(LoadContext loadContext, ObjectNode objectNode, String entityType) {
+    private String getNewEntityId(String entityType, LoadContext loadContext, JsonNode entityId) {
         switch (entityType) {
             case "DEVICE":
-                objectNode.put("id", loadContext.getDeviceIdMap().get(objectNode.get("id").asText()).toString());
+                return loadContext.getDeviceIdMap().get(entityId.asText()).toString();
+            case "ASSET":
+                return loadContext.getAssetIdMap().get(entityId.asText()).toString();
+            case "CUSTOMER":
+                return loadContext.getCustomerIdMap().get(entityId.asText()).toString();
+            default:
+                log.warn("Such entity type [{}] is not supported!", entityType);
+                return null;
+        }
+    }
+
+    private void changeEntityId(LoadContext loadContext, ObjectNode objectNode) {
+        String id = objectNode.get("id").asText();
+        String entityType = objectNode.get("entityType").asText();
+        switch (entityType) {
+            case "DEVICE":
+                objectNode.put("id", loadContext.getDeviceIdMap().get(id).toString());
                 break;
             case "ASSET":
-                objectNode.put("id", loadContext.getAssetIdMap().get(objectNode.get("id").asText()).toString());
+                objectNode.put("id", loadContext.getAssetIdMap().get(id).toString());
                 break;
             case "CUSTOMER":
-                objectNode.put("id", loadContext.getCustomerIdMap().get(objectNode.get("id").asText()).toString());
+                objectNode.put("id", loadContext.getCustomerIdMap().get(id).toString());
                 break;
+            default:
+                log.warn("Such entity type [{}] is not supported!", entityType);
         }
     }
 }
