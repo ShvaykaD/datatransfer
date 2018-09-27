@@ -5,12 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.exporting.entities.ExportAssets;
-import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
-import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
-import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
-import org.thingsboard.datatransfer.exporting.entities.ExportEntity;
-import org.thingsboard.datatransfer.exporting.entities.ExportEntityGroups;
+import org.thingsboard.datatransfer.exporting.entities.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -74,6 +69,9 @@ public class Export {
             if (isPe) {
                 ExportEntityGroups entityGroups = new ExportEntityGroups(tbRestClient, MAPPER, BASE_PATH);
                 entityGroups.getEntityGroups(SAVE_CONTEXT, LIMIT);
+
+                ExportConverters converters = new ExportConverters(tbRestClient, MAPPER, BASE_PATH);
+                converters.getConverters(SAVE_CONTEXT, LIMIT);
             }
 
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);

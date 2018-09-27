@@ -75,24 +75,4 @@ public class ExportEntity {
         return resultNode;
     }
 
-    /*void addEntityGroups(SaveContext saveContext, String strFromType, int limit) {
-        if (isPe) {
-            Optional<JsonNode> assetEntityGroupsOptional = tbRestClient.getTenantEntityGroups(strFromType);
-            assetEntityGroupsOptional.ifPresent(jsonNode -> {
-                for (JsonNode node : jsonNode) {
-                    saveContext.getEntityGroups().add(node);
-                    if (!node.get("name").asText().equals("All")) {
-                        Optional<JsonNode> entitiesOptional = tbRestClient.getTenantEntities(node.get("id").get("id").asText(), limit);
-                        if (entitiesOptional.isPresent()) {
-                            ObjectNode savedEntitiesNode = mapper.createObjectNode();
-                            savedEntitiesNode.put("entityGroupId", node.get("id").get("id").asText());
-                            savedEntitiesNode.setAll((ObjectNode) entitiesOptional.get());
-                            saveContext.getEntitiesInGroups().add(savedEntitiesNode);
-                        }
-                    }
-                }
-            });
-        }
-    }*/
-
 }

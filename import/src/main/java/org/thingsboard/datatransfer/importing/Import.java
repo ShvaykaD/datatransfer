@@ -73,6 +73,9 @@ public class Import {
                 ImportEntityGroups entityGroups = new ImportEntityGroups(tbRestClient, mapper, BASE_PATH, false);
                 entityGroups.saveTenantEntityGroups(LOAD_CONTEXT);
                 entityGroups.addTenantEntitiesToGroups(LOAD_CONTEXT);
+                ImportConverters converters = new ImportConverters(tbRestClient, mapper, BASE_PATH, false);
+                converters.saveConverters(LOAD_CONTEXT);
+
             }
 
             ImportDashboards dashboards = new ImportDashboards(tbRestClient, mapper, BASE_PATH);
