@@ -35,6 +35,26 @@ public class ExportEntity {
         }
     }
 
+    /*void addRelationToNodeForConverter(ArrayNode relationsArray, String strEntityId, String strFromType, String converterType) {
+
+        Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strEntityId, strFromType);
+        if (relationOptional.isPresent()) {
+            JsonNode relationsNode = relationOptional.get();
+            ObjectNode node = mapper.createObjectNode();
+            if (relationsNode.isArray() && relationsNode.size() != 0) {
+                for (JsonNode relation : node) {
+                    if (relation.get("to").get("entityType").asText().equals("CONVERTER")) {
+                        ObjectNode relationNode = (ObjectNode) relation;
+                        relationNode.put("converterType", );
+                    }
+                }
+                node.put("converterType", converterType);
+                node.set("relations", relationsNode);
+                relationsArray.add(node);
+            }
+        }
+    }*/
+
     StringBuilder getTelemetryKeys(String strFromType, String strEntityId) {
         Optional<JsonNode> telemetryKeysOptional = tbRestClient.getTelemetryKeys(strFromType, strEntityId);
         if (telemetryKeysOptional.isPresent()) {
@@ -66,6 +86,19 @@ public class ExportEntity {
         return null;
     }
 
+    /*ObjectNode getAttributesForConverter(String strFromType, String strEntityId, String converterType) {
+        Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strEntityId);
+        if (attributesOptional.isPresent()) {
+            JsonNode jsonNode = attributesOptional.get();
+            ObjectNode savedNode = createNode(strFromType, strEntityId, jsonNode, "attributes");
+            savedNode.put("converterType", converterType);
+            Optional<JsonNode> attributesKeysByScopeOptional = tbRestClient.getAttributesKeysByScope(strFromType, strEntityId, "SERVER_SCOPE");
+            attributesKeysByScopeOptional.ifPresent(node -> savedNode.set("attributeKeys", node));
+            return savedNode;
+        }
+        return null;
+    }*/
+
 
     ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
         ObjectNode resultNode = mapper.createObjectNode();
@@ -74,5 +107,14 @@ public class ExportEntity {
         resultNode.set(dataType, node);
         return resultNode;
     }
+
+    /*ObjectNode createNodeForConverter(String strFromType, String strEntityId, JsonNode node, String dataType, String converterType) {
+        ObjectNode resultNode = mapper.createObjectNode();
+        resultNode.put("entityType", strFromType);
+        resultNode.put("entityId", strEntityId);
+        resultNode.put("converterType", converterType);
+        resultNode.set(dataType, node);
+        return resultNode;
+    }*/
 
 }

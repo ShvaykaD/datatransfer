@@ -70,8 +70,12 @@ public class Export {
                 ExportEntityGroups entityGroups = new ExportEntityGroups(tbRestClient, MAPPER, BASE_PATH);
                 entityGroups.getEntityGroups(SAVE_CONTEXT, LIMIT);
 
+                ExportIntegrations integrations = new ExportIntegrations(tbRestClient, MAPPER, BASE_PATH);
+                integrations.getIntegrations(SAVE_CONTEXT, LIMIT);
+
                 ExportConverters converters = new ExportConverters(tbRestClient, MAPPER, BASE_PATH);
                 converters.getConverters(SAVE_CONTEXT, LIMIT);
+
             }
 
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);

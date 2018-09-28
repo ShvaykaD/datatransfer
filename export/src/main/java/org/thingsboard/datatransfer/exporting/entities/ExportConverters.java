@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.exporting.SaveContext;
 import org.thingsboard.server.common.data.id.ConverterId;
-import org.thingsboard.server.common.data.id.DashboardId;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,11 +22,11 @@ import java.util.UUID;
 @Slf4j
 public class ExportConverters extends ExportEntity {
 
-    private final ArrayNode converterNode;
+    private final ArrayNode converterArrayNode;
 
     public ExportConverters(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
         super(tbRestClient, mapper, basePath, false);
-        converterNode = mapper.createArrayNode();
+        converterArrayNode = mapper.createArrayNode();
     }
 
     public void getConverters(SaveContext saveContext, int limit) {
@@ -41,8 +40,11 @@ public class ExportConverters extends ExportEntity {
                     String strConverterId = node.get("id").get("id").asText();
                     addRelationToNode(saveContext.getRelationsArray(), strConverterId, strFromType);
 
-                    Optional<JsonNode> converterOptional = tbRestClient.getConverterById(new ConverterId(UUID.fromString(strConverterId)));
-                    converterOptional.ifPresent(converterNode::add);
+                    ObjectNode converterNode = (ObjectNode) node;
+                    if (saveContext.getRelatedIntegrationsToConverterNode().has(strConverterId)) {
+                        converterNode.put("integrationId", saveContext.getRelatedIntegrationsToConverterNode().get(strConverterId));
+                    }
+                    converterArrayNode.add(converterNode);
 
                     StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strConverterId);
 
@@ -58,7 +60,7 @@ public class ExportConverters extends ExportEntity {
                     }
 
                 }
-                writer.write(mapper.writeValueAsString(converterNode));
+                writer.write(mapper.writeValueAsString(converterArrayNode));
             }
         } catch (IOException e) {
             log.warn("Could not export dashboards to file.");

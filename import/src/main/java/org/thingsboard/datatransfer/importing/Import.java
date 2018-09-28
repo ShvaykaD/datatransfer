@@ -5,11 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.entities.*;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.id.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -73,9 +70,12 @@ public class Import {
                 ImportEntityGroups entityGroups = new ImportEntityGroups(tbRestClient, mapper, BASE_PATH, false);
                 entityGroups.saveTenantEntityGroups(LOAD_CONTEXT);
                 entityGroups.addTenantEntitiesToGroups(LOAD_CONTEXT);
+
                 ImportConverters converters = new ImportConverters(tbRestClient, mapper, BASE_PATH, false);
                 converters.saveConverters(LOAD_CONTEXT);
 
+                ImportIntegrations integrations = new ImportIntegrations(tbRestClient, mapper, BASE_PATH, false);
+                integrations.saveIntegrations(LOAD_CONTEXT);
             }
 
             ImportDashboards dashboards = new ImportDashboards(tbRestClient, mapper, BASE_PATH);
@@ -140,6 +140,20 @@ public class Import {
                                 tbRestClient.makeRelation(relationType, dashboardId, entityId);
                             }
                             break;
+                        case "CONVERTER":
+                            ConverterId converterId = LOAD_CONTEXT.getConverterIdMap().get(fromId);
+                            entityId = getToEntityId(toType, toId);
+                            if (entityId != null) {
+                                tbRestClient.makeRelation(relationType, converterId, entityId);
+                            }
+                            break;
+                        case "INTEGRATION":
+                            IntegrationId integrationId = LOAD_CONTEXT.getIntegrationIdMap().get(fromId);
+                            entityId = getToEntityId(toType, toId);
+                            if (entityId != null) {
+                                tbRestClient.makeRelation(relationType, integrationId, entityId);
+                            }
+                            break;
                         default:
                             log.warn("Entity type is not supported: {}", fromType);
                     }
@@ -162,6 +176,12 @@ public class Import {
                 break;
             case "DASHBOARD":
                 toEntityId = LOAD_CONTEXT.getDashboardIdMap().get(toId);
+                break;
+            case "CONVERTER":
+                toEntityId = LOAD_CONTEXT.getConverterIdMap().get(toId);
+                break;
+            case "INTEGRATION":
+                toEntityId = LOAD_CONTEXT.getIntegrationIdMap().get(toId);
                 break;
             default:
                 log.warn("Entity type is not supported: {}", toType);

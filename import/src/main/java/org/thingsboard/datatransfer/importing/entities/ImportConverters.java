@@ -10,6 +10,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.IntegrationId;
 
 
 import java.io.IOException;
@@ -52,17 +53,20 @@ public class ImportConverters {
         if (jsonNode != null) {
             for (JsonNode node : jsonNode) {
                 String converterName = node.get("name").asText();
-                if (!emptyDb) {
-                    if (converterNames.containsKey(converterName)) {
-                        tbRestClient.deleteConverter(converterNames.get(converterName));
+                if (!emptyDb && converterNames.containsKey(converterName)) {
+                    if (node.has("integrationId")) {
+                        for (JsonNode integrationId : node.get("integrationId")) {
+                            tbRestClient.deleteIntegration(IntegrationId.fromString(integrationId.asText()));
+                        }
                     }
+                    tbRestClient.deleteConverter(converterNames.get(converterName));
                 }
                 Converter converter = new Converter();
                 converter.setName(node.get("name").asText());
+                converter.setType(ConverterType.valueOf(node.get("type").asText()));
                 if (!node.get("configuration").isNull()) {
                     JsonNode configurationNode = node.get("configuration");
                     converter.setConfiguration(configurationNode);
-                    converter.setType(ConverterType.valueOf(node.get("type").asText()));
                 }
                 Converter savedConverter = tbRestClient.createConverter(converter);
                 loadContext.getConverterIdMap().put(node.get("id").get("id").asText(), savedConverter.getId());
