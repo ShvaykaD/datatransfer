@@ -76,6 +76,9 @@ public class Export {
                 ExportConverters converters = new ExportConverters(tbRestClient, MAPPER, BASE_PATH);
                 converters.getConverters(SAVE_CONTEXT, LIMIT);
 
+                ExportSchedulerEvents schedulerEvents = new ExportSchedulerEvents(tbRestClient, MAPPER, BASE_PATH);
+                schedulerEvents.getSchedulerEvents(SAVE_CONTEXT);
+
             }
 
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);
