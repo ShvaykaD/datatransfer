@@ -26,27 +26,25 @@ public class ExportSchedulerEvents extends ExportEntity {
     }
 
     public void getSchedulerEvents(SaveContext saveContext) {
-        for (SchedulerEventTypes eventType : SchedulerEventTypes.values()) {
-            Optional<JsonNode> schedulerEventsOptional = tbRestClient.findSchedulerEvent(String.valueOf(eventType));
+        Optional<JsonNode> schedulerEventsOptional = tbRestClient.findSchedulerEvent();
 
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "SchedulerEvents.json")))) {
-                if (schedulerEventsOptional.isPresent()) {
-                    ArrayNode schedulerEventsNode = (ArrayNode) schedulerEventsOptional.get();
-                    String strFromType = "SCHEDULER_EVENT";
-                    for (JsonNode node : schedulerEventsNode) {
-                        String strSchedulerEventId = node.get("id").get("id").asText();
-                        addRelationToNode(saveContext.getRelationsArray(), strSchedulerEventId, strFromType);
-                        Optional<JsonNode> schedulerEventOptional = tbRestClient.getSchedulerEventById(SchedulerEventId.fromString(strSchedulerEventId));
-                        if(schedulerEventOptional.isPresent()) {
-                            JsonNode savedSchedulerEvent = schedulerEventOptional.get();
-                            schedulerEventsArrayNode.add(savedSchedulerEvent);
-                        }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "SchedulerEvents.json")))) {
+            if (schedulerEventsOptional.isPresent()) {
+                ArrayNode schedulerEventsNode = (ArrayNode) schedulerEventsOptional.get();
+                String strFromType = "SCHEDULER_EVENT";
+                for (JsonNode node : schedulerEventsNode) {
+                    String strSchedulerEventId = node.get("id").get("id").asText();
+                    addRelationToNode(saveContext.getRelationsArray(), strSchedulerEventId, strFromType);
+                    Optional<JsonNode> schedulerEventOptional = tbRestClient.getSchedulerEventById(SchedulerEventId.fromString(strSchedulerEventId));
+                    if (schedulerEventOptional.isPresent()) {
+                        JsonNode savedSchedulerEvent = schedulerEventOptional.get();
+                        schedulerEventsArrayNode.add(savedSchedulerEvent);
                     }
-                    writer.write(mapper.writeValueAsString(schedulerEventsArrayNode));
                 }
-            } catch (IOException e) {
-                log.warn("Could not export dashboards to file.");
+                writer.write(mapper.writeValueAsString(schedulerEventsArrayNode));
             }
+        } catch (IOException e) {
+            log.warn("Could not export dashboards to file.");
         }
     }
 }

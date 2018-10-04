@@ -16,5 +16,7 @@ public class LoadContext {
     private final Map<String, EntityGroupId> entityGroupIdMap = new HashMap<>();
     private final Map<String, ConverterId> converterIdMap = new HashMap<>();
     private final Map<String, IntegrationId> integrationIdMap = new HashMap<>();
+    private final Map<String, SchedulerEventId> schedulerEventIdMap = new HashMap<>();
+    private final Map<String, UserId>  userIdMap = new HashMap<>();
 
 }

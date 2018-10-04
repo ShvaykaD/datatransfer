@@ -30,6 +30,7 @@ public class ExportCustomers extends ExportEntity {
                 String strFromType = "CUSTOMER";
                 for (JsonNode customerNode : customerArray) {
                     String strCustomerId = customerNode.get("id").get("id").asText();
+
                     addRelationToNode(saveContext.getRelationsArray(), strCustomerId, strFromType);
                     ObjectNode attributesNode = getAttributes(strFromType, strCustomerId);
                     if (attributesNode != null) {

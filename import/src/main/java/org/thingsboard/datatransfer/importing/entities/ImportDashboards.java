@@ -64,10 +64,12 @@ public class ImportDashboards {
         dashboard.setTitle(node.get("title").asText());
         if (!node.get("configuration").isNull()) {
             JsonNode configurationNode = node.get("configuration");
-            for (Iterator<JsonNode> iter = configurationNode.get("entityAliases").elements(); iter.hasNext(); ) {
-                JsonNode aliasNode = iter.next();
-                changeAliasConfiguration(loadContext, aliasNode);
-            }
+                if(configurationNode.has("entityAliases")){
+                    for (Iterator<JsonNode> iter = configurationNode.get("entityAliases").elements(); iter.hasNext(); ) {
+                        JsonNode aliasNode = iter.next();
+                        changeAliasConfiguration(loadContext, aliasNode);
+                    }
+                }
             dashboard.setConfiguration(configurationNode);
         }
         return tbRestClient.createDashboard(dashboard);

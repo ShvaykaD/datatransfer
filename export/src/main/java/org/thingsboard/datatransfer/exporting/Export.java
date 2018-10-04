@@ -2,7 +2,6 @@ package org.thingsboard.datatransfer.exporting;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.exporting.entities.*;
@@ -59,6 +58,9 @@ public class Export {
 
             ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH, isPe);
             customers.getTenantCustomers(SAVE_CONTEXT, LIMIT);
+
+            ExportUsers users = new ExportUsers(tbRestClient, MAPPER, BASE_PATH, isPe);
+            users.getAllCustomerUsers(SAVE_CONTEXT, LIMIT);
 
             ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH, isPe);
             devices.getTenantDevices(SAVE_CONTEXT, LIMIT);

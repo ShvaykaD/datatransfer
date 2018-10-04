@@ -33,10 +33,10 @@ public class ImportConverters {
         this.emptyDb = emptyDb;
     }
 
-    public void saveConverters(LoadContext loadContext) {
+    public void saveConverters(LoadContext loadContext , int limit) {
         Map<String, ConverterId> converterNames = new HashMap<>();
         if (!emptyDb) {
-            Optional<JsonNode> convertersOptional = tbRestClient.findConverters(10000);
+            Optional<JsonNode> convertersOptional = tbRestClient.findConverters(limit);
             if (convertersOptional.isPresent()) {
                 ArrayNode convertersArray = (ArrayNode) convertersOptional.get().get("data");
                 for (JsonNode node : convertersArray) {
@@ -55,8 +55,8 @@ public class ImportConverters {
                 String converterName = node.get("name").asText();
                 if (!emptyDb && converterNames.containsKey(converterName)) {
                     if (node.has("integrationId")) {
-                        for (JsonNode integrationId : node.get("integrationId")) {
-                            tbRestClient.deleteIntegration(IntegrationId.fromString(integrationId.asText()));
+                        for (JsonNode integrationIdNode : node.get("integrationId")) {
+                            tbRestClient.deleteIntegration(IntegrationId.fromString(integrationIdNode.asText()));
                         }
                     }
                     tbRestClient.deleteConverter(converterNames.get(converterName));

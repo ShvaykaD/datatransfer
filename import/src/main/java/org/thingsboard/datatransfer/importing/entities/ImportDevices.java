@@ -56,7 +56,7 @@ public class ImportDevices {
     }
 
     private void createCredentialsForDevice(JsonNode node, Device device) {
-        DeviceCredentials deviceCredentialsOptional = tbRestClient.getCredentials(device.getId());
+        DeviceCredentials deviceCredentialsOptional = tbRestClient.getDeviceCredentials(device.getId());
         if (node.get("credentialsType").asText().equals(DeviceCredentialsType.ACCESS_TOKEN.name())) {
             deviceCredentialsOptional.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         } else {
