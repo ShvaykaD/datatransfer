@@ -61,9 +61,10 @@ public class ExportDevices extends ExportEntity {
 
 
     private void addDeviceCredentialsToDeviceNode(ObjectNode deviceNode, String strDeviceId) {
-        DeviceCredentials deviceCredentials = tbRestClient.getCredentials(new DeviceId(UUID.fromString(strDeviceId)));
+        DeviceCredentials deviceCredentials = tbRestClient.getDeviceCredentials(new DeviceId(UUID.fromString(strDeviceId)));
         deviceNode.put("credentialsType", deviceCredentials.getCredentialsType().name());
         deviceNode.put("credentialsId", deviceCredentials.getCredentialsId());
         deviceNode.put("credentialsValue", deviceCredentials.getCredentialsValue());
     }
+
 }

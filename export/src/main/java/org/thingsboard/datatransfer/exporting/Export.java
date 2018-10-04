@@ -2,15 +2,9 @@ package org.thingsboard.datatransfer.exporting;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.exporting.entities.ExportAssets;
-import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
-import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
-import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
-import org.thingsboard.datatransfer.exporting.entities.ExportEntity;
-import org.thingsboard.datatransfer.exporting.entities.ExportEntityGroups;
+import org.thingsboard.datatransfer.exporting.entities.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -65,6 +59,9 @@ public class Export {
             ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH, isPe);
             customers.getTenantCustomers(SAVE_CONTEXT, LIMIT);
 
+            ExportUsers users = new ExportUsers(tbRestClient, MAPPER, BASE_PATH, isPe);
+            users.getAllCustomerUsers(SAVE_CONTEXT, LIMIT);
+
             ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH, isPe);
             devices.getTenantDevices(SAVE_CONTEXT, LIMIT);
 
@@ -74,6 +71,16 @@ public class Export {
             if (isPe) {
                 ExportEntityGroups entityGroups = new ExportEntityGroups(tbRestClient, MAPPER, BASE_PATH);
                 entityGroups.getEntityGroups(SAVE_CONTEXT, LIMIT);
+
+                ExportIntegrations integrations = new ExportIntegrations(tbRestClient, MAPPER, BASE_PATH);
+                integrations.getIntegrations(SAVE_CONTEXT, LIMIT);
+
+                ExportConverters converters = new ExportConverters(tbRestClient, MAPPER, BASE_PATH);
+                converters.getConverters(SAVE_CONTEXT, LIMIT);
+
+                ExportSchedulerEvents schedulerEvents = new ExportSchedulerEvents(tbRestClient, MAPPER, BASE_PATH);
+                schedulerEvents.getSchedulerEvents(SAVE_CONTEXT);
+
             }
 
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);

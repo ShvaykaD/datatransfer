@@ -35,6 +35,26 @@ public class ExportEntity {
         }
     }
 
+    /*void addRelationToNodeForConverter(ArrayNode relationsArray, String strEntityId, String strFromType, String converterType) {
+
+        Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strEntityId, strFromType);
+        if (relationOptional.isPresent()) {
+            JsonNode relationsNode = relationOptional.get();
+            ObjectNode node = mapper.createObjectNode();
+            if (relationsNode.isArray() && relationsNode.size() != 0) {
+                for (JsonNode relation : node) {
+                    if (relation.get("to").get("entityType").asText().equals("CONVERTER")) {
+                        ObjectNode relationNode = (ObjectNode) relation;
+                        relationNode.put("converterType", );
+                    }
+                }
+                node.put("converterType", converterType);
+                node.set("relations", relationsNode);
+                relationsArray.add(node);
+            }
+        }
+    }*/
+
     StringBuilder getTelemetryKeys(String strFromType, String strEntityId) {
         Optional<JsonNode> telemetryKeysOptional = tbRestClient.getTelemetryKeys(strFromType, strEntityId);
         if (telemetryKeysOptional.isPresent()) {
@@ -66,6 +86,19 @@ public class ExportEntity {
         return null;
     }
 
+    /*ObjectNode getAttributesForConverter(String strFromType, String strEntityId, String converterType) {
+        Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strEntityId);
+        if (attributesOptional.isPresent()) {
+            JsonNode jsonNode = attributesOptional.get();
+            ObjectNode savedNode = createNode(strFromType, strEntityId, jsonNode, "attributes");
+            savedNode.put("converterType", converterType);
+            Optional<JsonNode> attributesKeysByScopeOptional = tbRestClient.getAttributesKeysByScope(strFromType, strEntityId, "SERVER_SCOPE");
+            attributesKeysByScopeOptional.ifPresent(node -> savedNode.set("attributeKeys", node));
+            return savedNode;
+        }
+        return null;
+    }*/
+
 
     ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
         ObjectNode resultNode = mapper.createObjectNode();
@@ -75,24 +108,13 @@ public class ExportEntity {
         return resultNode;
     }
 
-    /*void addEntityGroups(SaveContext saveContext, String strFromType, int limit) {
-        if (isPe) {
-            Optional<JsonNode> assetEntityGroupsOptional = tbRestClient.getTenantEntityGroups(strFromType);
-            assetEntityGroupsOptional.ifPresent(jsonNode -> {
-                for (JsonNode node : jsonNode) {
-                    saveContext.getEntityGroups().add(node);
-                    if (!node.get("name").asText().equals("All")) {
-                        Optional<JsonNode> entitiesOptional = tbRestClient.getTenantEntities(node.get("id").get("id").asText(), limit);
-                        if (entitiesOptional.isPresent()) {
-                            ObjectNode savedEntitiesNode = mapper.createObjectNode();
-                            savedEntitiesNode.put("entityGroupId", node.get("id").get("id").asText());
-                            savedEntitiesNode.setAll((ObjectNode) entitiesOptional.get());
-                            saveContext.getEntitiesInGroups().add(savedEntitiesNode);
-                        }
-                    }
-                }
-            });
-        }
+    /*ObjectNode createNodeForConverter(String strFromType, String strEntityId, JsonNode node, String dataType, String converterType) {
+        ObjectNode resultNode = mapper.createObjectNode();
+        resultNode.put("entityType", strFromType);
+        resultNode.put("entityId", strEntityId);
+        resultNode.put("converterType", converterType);
+        resultNode.set(dataType, node);
+        return resultNode;
     }*/
 
 }
