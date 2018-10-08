@@ -52,11 +52,11 @@ public class ImportAttributes extends ImportEntity {
                         EntityId entityId = getEntityId(loadContext, node, entityType);
                         if (entityId != null) {
                             if (checkIfPresent(node.get("attributeKeys"), attributeNode.get("key").asText())) {
-                                log.info("Pushing server scope attributes to {} [{}]", entityType, entityId);
+                                log.info("Pushing server attributes to {} [{}]", entityType, entityId);
                                 httpClient.sendData(TB_BASE_URL + "/api/plugins/telemetry/" + entityType + "/" +
                                         entityId.toString() + "/attributes/SERVER_SCOPE", savingNode, TB_TOKEN);
                             } else {
-                                log.info("Pushing shared scope attributes to {} [{}]", entityType, entityId);
+                                log.info("Pushing shared attributes to {} [{}]", entityType, entityId);
                                 httpClient.sendData(TB_BASE_URL + "/api/plugins/telemetry/" + entityType + "/" +
                                         entityId.toString() + "/attributes/SHARED_SCOPE", savingNode, TB_TOKEN);
                             }

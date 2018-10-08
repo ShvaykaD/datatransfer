@@ -44,11 +44,14 @@ public class ImportAssets {
         if (jsonNode != null) {
             for (JsonNode node : jsonNode) {
                 String assetName = node.get("name").asText();
-                if (!emptyDb) {
+
+                Asset asset;
+                if (emptyDb) {
+                    asset = tbRestClient.createAsset(assetName, node.get("type").asText());
+                } else {
                     Optional<Asset> assetOptional = tbRestClient.findAsset(assetName);
-                    assetOptional.ifPresent(asset -> tbRestClient.deleteAsset(asset.getId()));
+                    asset = assetOptional.orElseGet(() -> tbRestClient.createAsset(assetName, node.get("type").asText()));
                 }
-                Asset asset = tbRestClient.createAsset(assetName, node.get("type").asText());
                 loadContext.getAssetIdMap().put(node.get("id").get("id").asText(), asset.getId());
                 assignAssetToCustomer(loadContext.getCustomerIdMap(), node, asset);
             }

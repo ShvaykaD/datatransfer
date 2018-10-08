@@ -4,12 +4,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.importing.entities.*;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.converter.Converter;
-import org.thingsboard.server.common.data.id.*;
-import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
-import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.datatransfer.importing.entities.ImportAssets;
+import org.thingsboard.datatransfer.importing.entities.ImportAttributes;
+import org.thingsboard.datatransfer.importing.entities.ImportConverters;
+import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
+import org.thingsboard.datatransfer.importing.entities.ImportDashboards;
+import org.thingsboard.datatransfer.importing.entities.ImportDevices;
+import org.thingsboard.datatransfer.importing.entities.ImportEntityGroups;
+import org.thingsboard.datatransfer.importing.entities.ImportIntegrations;
+import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
+import org.thingsboard.datatransfer.importing.entities.ImportUsers;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.SchedulerEventId;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,7 +42,6 @@ public class Import {
     public static String TB_BASE_URL;
     public static String TB_TOKEN;
     private static String BASE_PATH;
-    public static int LIMIT;
 
     public static int THRESHOLD;
     public static ExecutorService EXECUTOR_SERVICE;
@@ -58,13 +68,14 @@ public class Import {
             TB_TOKEN = tbRestClient.getToken();
 
             Optional<JsonNode> tenantUser = tbRestClient.getCurruntTenantUser();
-            if(tenantUser.isPresent()){
+            if (tenantUser.isPresent()) {
+                //TODO
                 String strUserId = tenantUser.get().get("id").get("id").asText();
             }
 
             boolean emptyDb = Boolean.parseBoolean(properties.getProperty("emptyDb"));
             boolean isPe = Boolean.parseBoolean(properties.getProperty("isPe"));
-            LIMIT = Integer.parseInt(properties.getProperty("limit"));
+            int limit = Integer.parseInt(properties.getProperty("limit"));
             BASE_PATH = properties.getProperty("basePath");
 
             log.info("Start importing...");
@@ -84,12 +95,13 @@ public class Import {
                 entityGroups.addTenantEntitiesToGroups(LOAD_CONTEXT);
 
                 ImportConverters converters = new ImportConverters(tbRestClient, mapper, BASE_PATH, false);
-                converters.saveConverters(LOAD_CONTEXT, LIMIT);
+                converters.saveConverters(LOAD_CONTEXT, limit);
 
                 ImportIntegrations integrations = new ImportIntegrations(tbRestClient, mapper, BASE_PATH, false);
                 integrations.saveIntegrations(LOAD_CONTEXT);
 
-               /* ImportSchedulerEvents schedulerEvents = new ImportSchedulerEvents(tbRestClient, mapper, BASE_PATH);
+                //TODO
+                /*ImportSchedulerEvents schedulerEvents = new ImportSchedulerEvents(tbRestClient, mapper, BASE_PATH);
                 schedulerEvents.saveSchedulerEvents(LOAD_CONTEXT);*/
             }
 
@@ -97,8 +109,7 @@ public class Import {
             dashboards.saveTenantDashboards(LOAD_CONTEXT);
 
             ImportUsers users = new ImportUsers(tbRestClient, mapper, BASE_PATH, emptyDb);
-            users.saveCustomersUsers(LOAD_CONTEXT, LIMIT);
-
+            users.saveCustomersUsers(LOAD_CONTEXT, limit);
 
             ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
             telemetry.saveTelemetry(LOAD_CONTEXT);

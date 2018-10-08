@@ -5,14 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.LoadContext;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 import static org.thingsboard.datatransfer.importing.Import.NULL_UUID;
 

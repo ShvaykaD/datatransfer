@@ -2,7 +2,6 @@ package org.thingsboard.datatransfer.exporting.entities;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
@@ -16,46 +15,25 @@ public class ExportEntity {
     final RestClient tbRestClient;
     final ObjectMapper mapper;
     final String basePath;
-    private final boolean isPe;
 
-    public ExportEntity(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean isPe) {
+    public ExportEntity(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
         this.tbRestClient = tbRestClient;
         this.mapper = mapper;
         this.basePath = basePath;
-        this.isPe = isPe;
     }
 
-    void addRelationToNode(ArrayNode relationsArray, String strEntityId, String strFromType) {
+    JsonNode getRelationsFromEntity(String strEntityId, String strFromType) {
         Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strEntityId, strFromType);
         if (relationOptional.isPresent()) {
             JsonNode node = relationOptional.get();
             if (node.isArray() && node.size() != 0) {
-                relationsArray.add(node);
+                return node;
             }
         }
+        return null;
     }
 
-    /*void addRelationToNodeForConverter(ArrayNode relationsArray, String strEntityId, String strFromType, String converterType) {
-
-        Optional<JsonNode> relationOptional = tbRestClient.getRelationByFrom(strEntityId, strFromType);
-        if (relationOptional.isPresent()) {
-            JsonNode relationsNode = relationOptional.get();
-            ObjectNode node = mapper.createObjectNode();
-            if (relationsNode.isArray() && relationsNode.size() != 0) {
-                for (JsonNode relation : node) {
-                    if (relation.get("to").get("entityType").asText().equals("CONVERTER")) {
-                        ObjectNode relationNode = (ObjectNode) relation;
-                        relationNode.put("converterType", );
-                    }
-                }
-                node.put("converterType", converterType);
-                node.set("relations", relationsNode);
-                relationsArray.add(node);
-            }
-        }
-    }*/
-
-    StringBuilder getTelemetryKeys(String strFromType, String strEntityId) {
+    String getTelemetryKeys(String strFromType, String strEntityId) {
         Optional<JsonNode> telemetryKeysOptional = tbRestClient.getTelemetryKeys(strFromType, strEntityId);
         if (telemetryKeysOptional.isPresent()) {
             JsonNode telemetryKeysNode = telemetryKeysOptional.get();
@@ -69,7 +47,7 @@ public class ExportEntity {
                 }
                 i++;
             }
-            return keys;
+            return keys.toString();
         }
         return null;
     }
@@ -86,20 +64,6 @@ public class ExportEntity {
         return null;
     }
 
-    /*ObjectNode getAttributesForConverter(String strFromType, String strEntityId, String converterType) {
-        Optional<JsonNode> attributesOptional = tbRestClient.getAttributes(strFromType, strEntityId);
-        if (attributesOptional.isPresent()) {
-            JsonNode jsonNode = attributesOptional.get();
-            ObjectNode savedNode = createNode(strFromType, strEntityId, jsonNode, "attributes");
-            savedNode.put("converterType", converterType);
-            Optional<JsonNode> attributesKeysByScopeOptional = tbRestClient.getAttributesKeysByScope(strFromType, strEntityId, "SERVER_SCOPE");
-            attributesKeysByScopeOptional.ifPresent(node -> savedNode.set("attributeKeys", node));
-            return savedNode;
-        }
-        return null;
-    }*/
-
-
     ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
         ObjectNode resultNode = mapper.createObjectNode();
         resultNode.put("entityType", strFromType);
@@ -108,13 +72,28 @@ public class ExportEntity {
         return resultNode;
     }
 
-    /*ObjectNode createNodeForConverter(String strFromType, String strEntityId, JsonNode node, String dataType, String converterType) {
-        ObjectNode resultNode = mapper.createObjectNode();
-        resultNode.put("entityType", strFromType);
-        resultNode.put("entityId", strEntityId);
-        resultNode.put("converterType", converterType);
-        resultNode.set(dataType, node);
-        return resultNode;
-    }*/
+    void processEntityNodes(SaveContext saveContext, int limit, JsonNode entityArray, String strFromType) {
+        for (JsonNode node : entityArray) {
+            String strEntityId = node.get("id").get("id").asText();
+
+            JsonNode relationsFromEntityNode = getRelationsFromEntity(strEntityId, strFromType);
+            if (relationsFromEntityNode != null) {
+                saveContext.getRelationsArray().add(relationsFromEntityNode);
+            }
+
+            String telemetryKeys = getTelemetryKeys(strFromType, strEntityId);
+
+            if (telemetryKeys != null && telemetryKeys.length() != 0) {
+                Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strEntityId,
+                        telemetryKeys, limit, 0L, System.currentTimeMillis());
+                telemetryNodeOptional.ifPresent(jsonNode ->
+                        saveContext.getTelemetryArray().add(createNode(strFromType, strEntityId, jsonNode, "telemetry")));
+            }
+            ObjectNode attributesNode = getAttributes(strFromType, strEntityId);
+            if (attributesNode != null) {
+                saveContext.getAttributesArray().add(attributesNode);
+            }
+        }
+    }
 
 }

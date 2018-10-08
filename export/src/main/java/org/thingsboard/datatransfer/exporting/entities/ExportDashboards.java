@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Created by mshvayka on 13.09.18.
@@ -24,7 +23,7 @@ public class ExportDashboards extends ExportEntity {
     private final ArrayNode dashboardNode;
 
     public ExportDashboards(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath, false);
+        super(tbRestClient, mapper, basePath);
         dashboardNode = mapper.createArrayNode();
     }
 
@@ -33,13 +32,17 @@ public class ExportDashboards extends ExportEntity {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Dashboards.json")))) {
             if (dashboardsOptional.isPresent()) {
-                ArrayNode dashboardArray = (ArrayNode) dashboardsOptional.get().get("data");
+                JsonNode dashboardArray = dashboardsOptional.get().get("data");
                 String strFromType = "DASHBOARD";
                 for (JsonNode node : dashboardArray) {
                     String strDashboardId = node.get("id").get("id").asText();
-                    addRelationToNode(saveContext.getRelationsArray(), strDashboardId, strFromType);
 
-                    Optional<JsonNode> dashboardOptional = tbRestClient.getDashboardById(new DashboardId(UUID.fromString(strDashboardId)));
+                    JsonNode relationsFromEntityNode = getRelationsFromEntity(strDashboardId, strFromType);
+                    if (relationsFromEntityNode != null) {
+                        saveContext.getRelationsArray().add(relationsFromEntityNode);
+                    }
+
+                    Optional<JsonNode> dashboardOptional = tbRestClient.getDashboardById(DashboardId.fromString(strDashboardId));
                     dashboardOptional.ifPresent(dashboardNode::add);
                 }
                 writer.write(mapper.writeValueAsString(dashboardNode));

@@ -6,14 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.thingsboard.datatransfer.importing.Import.NULL_UUID;
@@ -42,13 +40,15 @@ public class ImportDevices {
         }
         if (jsonNode != null) {
             for (JsonNode node : jsonNode) {
-                if (!emptyDb) {
-                    Optional<Device> deviceOptional = tbRestClient.findDevice(node.get("name").asText());
-                    deviceOptional.ifPresent(device -> tbRestClient.deleteDevice(device.getId()));
-                }
-                Device device = createDevice(node);
-                loadContext.getDeviceIdMap().put(node.get("id").get("id").asText(), device.getId());
 
+                Device device;
+                if (emptyDb) {
+                    device = createDevice(node);
+                } else {
+                    Optional<Device> deviceOptional = tbRestClient.findDevice(node.get("name").asText());
+                    device = deviceOptional.orElseGet(() -> createDevice(node));
+                }
+                loadContext.getDeviceIdMap().put(node.get("id").get("id").asText(), device.getId());
                 assignDeviceToCustomer(loadContext, node, device);
                 createCredentialsForDevice(node, device);
             }

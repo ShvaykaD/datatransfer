@@ -53,7 +53,8 @@ public class ImportDashboards {
                 if (customerNode.get("public").asBoolean()) {
                     tbRestClient.assignDashboardToPublicCustomer(savedDashboard.getId());
                 } else {
-                    tbRestClient.assignDashboard(loadContext.getCustomerIdMap().get(customerNode.get("customerId").get("id").asText()), savedDashboard.getId());
+                    tbRestClient.assignDashboard(loadContext.getCustomerIdMap().get(customerNode.get("customerId").get("id").asText()),
+                            savedDashboard.getId());
                 }
             }
         }
@@ -64,12 +65,12 @@ public class ImportDashboards {
         dashboard.setTitle(node.get("title").asText());
         if (!node.get("configuration").isNull()) {
             JsonNode configurationNode = node.get("configuration");
-                if(configurationNode.has("entityAliases")){
-                    for (Iterator<JsonNode> iter = configurationNode.get("entityAliases").elements(); iter.hasNext(); ) {
-                        JsonNode aliasNode = iter.next();
-                        changeAliasConfiguration(loadContext, aliasNode);
-                    }
+            if (configurationNode.has("entityAliases")) {
+                for (Iterator<JsonNode> iter = configurationNode.get("entityAliases").elements(); iter.hasNext(); ) {
+                    JsonNode aliasNode = iter.next();
+                    changeAliasConfiguration(loadContext, aliasNode);
                 }
+            }
             dashboard.setConfiguration(configurationNode);
         }
         return tbRestClient.createDashboard(dashboard);

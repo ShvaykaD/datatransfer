@@ -11,27 +11,29 @@ import java.util.Optional;
 public class ExportEntityGroups extends ExportEntity {
 
     public ExportEntityGroups(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath, true);
+        super(tbRestClient, mapper, basePath);
     }
 
     public void getEntityGroups(SaveContext saveContext, int limit) {
+        String strFromType = "ENTITY_GROUP";
         for (EntityTypes entityType : EntityTypes.values()) {
-            String strFromType = "ENTITY_GROUP";
             Optional<JsonNode> entityGroupsOptional = tbRestClient.getTenantEntityGroups(entityType.name());
             entityGroupsOptional.ifPresent(entityGroupsNode -> {
                 for (JsonNode entityGroupNode : entityGroupsNode) {
-                    saveContext.getEntityGroups().add(entityGroupNode);
-                    String strEntityId = entityGroupNode.get("id").get("id").asText();
-                    if (!entityGroupNode.get("name").asText().equals("All")) {
-                        Optional<JsonNode> entitiesOptional = tbRestClient.getTenantEntities(strEntityId, limit);
-                        entitiesOptional.ifPresent(jsonNode ->
-                                saveContext.getEntitiesInGroups().add(createEntityNode(strEntityId, (ObjectNode) jsonNode)));
+                    if (entityGroupNode.get("name").asText().equals("All")) {
+                        continue;
                     }
+                    saveContext.getEntityGroups().add(entityGroupNode);
 
-                    StringBuilder telemetryKeys = getTelemetryKeys(strFromType, strEntityId);
+                    String strEntityId = entityGroupNode.get("id").get("id").asText();
+                    Optional<JsonNode> entitiesOptional = tbRestClient.getTenantEntities(strEntityId, limit);
+                    entitiesOptional.ifPresent(jsonNode ->
+                            saveContext.getEntitiesInGroups().add(createEntityNode(strEntityId, (ObjectNode) jsonNode)));
+
+                    String telemetryKeys = getTelemetryKeys(strFromType, strEntityId);
                     if (telemetryKeys != null && telemetryKeys.length() != 0) {
                         Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strEntityId,
-                                telemetryKeys.toString(), limit, 0L, System.currentTimeMillis());
+                                telemetryKeys, limit, 0L, System.currentTimeMillis());
                         telemetryNodeOptional.ifPresent(telemetryNode -> saveContext.getTelemetryArray().add(
                                 createNode(strFromType, strEntityId, telemetryNode, "telemetry")));
                     }

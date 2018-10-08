@@ -2,13 +2,12 @@ package org.thingsboard.datatransfer.importing.entities;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 
@@ -41,33 +40,39 @@ public class ImportUsers {
         if (!emptyDb) {
             Optional<JsonNode> usersOptional = tbRestClient.findAllCustomerUsers(limit);
             if (usersOptional.isPresent()) {
-                ArrayNode usersArray = (ArrayNode) usersOptional.get().get("data");
-                for (JsonNode node : usersArray) {
+                for (JsonNode node : usersOptional.get().get("data")) {
                     userEmailsMap.put(node.get("email").asText(), new UserId(UUID.fromString(node.get("id").get("id").asText())));
-
                 }
             }
         }
-        JsonNode jsonNode = null;
+        JsonNode usersNode = null;
         try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Users.json"))));
+            usersNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Users.json"))));
         } catch (IOException e) {
             log.warn("Could not read users file");
         }
-        if (jsonNode != null) {
-            for (JsonNode node : jsonNode) {
-                if (!emptyDb && userEmailsMap.containsKey(node.get("email").asText())) {
-                    tbRestClient.deleteUser(UserId.fromString(node.get("id").get("id").asText()));
+        if (usersNode != null) {
+            for (JsonNode userNode : usersNode) {
+                String email = userNode.get("email").asText();
+
+                UserId userId;
+                if (emptyDb || !userEmailsMap.containsKey(email)) {
+                    userId = createUser(userNode, loadContext).getId();
+                } else {
+                    userId = userEmailsMap.get(email);
                 }
-                User user = createUser(node, loadContext);
-                loadContext.getUserIdMap().put(node.get("id").get("id").asText(), user.getId());
-                UserCredentials credentials = tbRestClient.getUserCredentials(user.getId());
-                credentials.setPassword(node.get("password").asText());
-                credentials.setEnabled(true);
-                credentials.setActivateToken(null);
-                tbRestClient.saveUserCredentials(credentials);
+                loadContext.getUserIdMap().put(userNode.get("id").get("id").asText(), userId);
+                saveUserCredentials(userNode, userId);
             }
         }
+    }
+
+    private void saveUserCredentials(JsonNode node, UserId userId) {
+        UserCredentials credentials = tbRestClient.getUserCredentials(userId);
+        credentials.setPassword(node.get("password").asText());
+        credentials.setEnabled(true);
+        credentials.setActivateToken(null);
+        tbRestClient.saveUserCredentials(credentials);
     }
 
     private User createUser(JsonNode node, LoadContext loadContext) {

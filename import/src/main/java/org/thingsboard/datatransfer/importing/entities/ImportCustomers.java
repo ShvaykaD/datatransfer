@@ -28,27 +28,28 @@ public class ImportCustomers {
     }
 
     public void saveTenantCustomers(LoadContext loadContext) {
-        JsonNode jsonNode = null;
+        JsonNode customersNode = null;
         try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Customers.json"))));
+            customersNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Customers.json"))));
         } catch (IOException e) {
             log.warn("Could not read customers file");
         }
-        if (jsonNode != null) {
-            for (JsonNode node : jsonNode) {
-                if (!node.get("additionalInfo").has("isPublic")) {
-                    String customerTitle = node.get("title").asText();
-                    if (!emptyDb) {
+        if (customersNode != null) {
+            for (JsonNode customerNode : customersNode) {
+                if (!customerNode.get("additionalInfo").has("isPublic")) {
+                    String customerTitle = customerNode.get("title").asText();
+
+                    Customer customer;
+                    if (emptyDb) {
+                        customer = tbRestClient.createCustomer(customerTitle);
+                    } else {
                         Optional<Customer> customerOptional = tbRestClient.findCustomer(customerTitle);
-                        customerOptional.ifPresent(customer -> tbRestClient.deleteCustomer(customer.getId()));
+                        customer = customerOptional.orElseGet(() -> tbRestClient.createCustomer(customerTitle));
                     }
-                    Customer customer = tbRestClient.createCustomer(customerTitle);
-                    loadContext.getCustomerIdMap().put(node.get("id").get("id").asText(), customer.getId());
+                    loadContext.getCustomerIdMap().put(customerNode.get("id").get("id").asText(), customer.getId());
                 }
             }
         }
-
-
     }
 
 }
