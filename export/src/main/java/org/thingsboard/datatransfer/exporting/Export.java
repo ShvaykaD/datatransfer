@@ -9,7 +9,6 @@ import org.thingsboard.datatransfer.exporting.entities.ExportConverters;
 import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
 import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
 import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
-import org.thingsboard.datatransfer.exporting.entities.ExportEntity;
 import org.thingsboard.datatransfer.exporting.entities.ExportEntityGroups;
 import org.thingsboard.datatransfer.exporting.entities.ExportIntegrations;
 import org.thingsboard.datatransfer.exporting.entities.ExportSchedulerEvents;
@@ -22,6 +21,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class Export {
@@ -30,9 +31,14 @@ public class Export {
     private static final SaveContext SAVE_CONTEXT = new SaveContext(MAPPER);
 
     private static String BASE_PATH;
+    private static String TB_TOKEN;
+
+    private static int THRESHOLD;
+    private static ExecutorService EXECUTOR_SERVICE;
 
     public static void main(String[] args) {
         Properties properties = new Properties();
+        Client httpClient = new Client();
         String filename;
         if (args.length > 0) {
             filename = args[0];
@@ -46,12 +52,14 @@ public class Export {
             int limit = Integer.parseInt(properties.getProperty("limit"));
             boolean isPe = Boolean.parseBoolean(properties.getProperty("isPe"));
 
+            THRESHOLD = Integer.parseInt(properties.getProperty("threshold"));
+            EXECUTOR_SERVICE = Executors.newFixedThreadPool(Integer.parseInt(properties.getProperty("threadsCount")));
+
             RestClient tbRestClient = new RestClient(properties.getProperty("tbBaseURL"));
             tbRestClient.login(properties.getProperty("tbLogin"), properties.getProperty("tbPassword"));
+            TB_TOKEN = tbRestClient.getToken();
 
             log.info("Start exporting...");
-            new ExportEntity(tbRestClient, MAPPER, BASE_PATH);
-
             ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH);
             customers.getTenantCustomers(SAVE_CONTEXT, limit);
 

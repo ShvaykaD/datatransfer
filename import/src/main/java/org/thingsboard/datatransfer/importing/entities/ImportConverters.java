@@ -9,25 +9,19 @@ import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.id.ConverterId;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-public class ImportConverters {
+public class ImportConverters extends ImportEntity {
 
-    private final ObjectMapper mapper;
     private final RestClient tbRestClient;
-    private final String basePath;
     private final boolean emptyDb;
 
     public ImportConverters(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean emptyDb) {
+        super(mapper, basePath);
         this.tbRestClient = tbRestClient;
-        this.mapper = mapper;
-        this.basePath = basePath;
         this.emptyDb = emptyDb;
     }
 
@@ -41,16 +35,11 @@ public class ImportConverters {
                 }
             }
         }
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Converters.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read converters file");
-        }
-        if (jsonNode != null) {
-            for (JsonNode node : jsonNode) {
-                loadContext.getConverterIdMap().put(node.get("id").get("id").asText(),
-                        getConverterId(convertersMap, node));
+        JsonNode convertersNode = readFileContentToNode("Converters.json");
+        if (convertersNode != null) {
+            for (JsonNode converterNode : convertersNode) {
+                loadContext.getConverterIdMap().put(converterNode.get("id").get("id").asText(),
+                        getConverterId(convertersMap, converterNode));
             }
         }
     }

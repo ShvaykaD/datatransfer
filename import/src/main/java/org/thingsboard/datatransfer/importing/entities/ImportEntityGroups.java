@@ -20,17 +20,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-public class ImportEntityGroups {
+public class ImportEntityGroups extends ImportEntity {
 
-    private final ObjectMapper mapper;
     private final RestClient tbRestClient;
-    private final String basePath;
     private final boolean emptyDb;
 
     public ImportEntityGroups(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean emptyDb) {
+        super(mapper, basePath);
         this.tbRestClient = tbRestClient;
-        this.mapper = mapper;
-        this.basePath = basePath;
         this.emptyDb = emptyDb;
     }
 
@@ -50,26 +47,24 @@ public class ImportEntityGroups {
             }
         }
 
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "EntityGroups.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read entity groups file");
-        }
-
-        if (jsonNode != null) {
-            for (JsonNode node : jsonNode) {
-                String entityGroupName = node.get("name").asText();
-
-                EntityGroupId entityGroupId;
-                if (emptyDb || !entityGroupNames.containsKey(entityGroupName)) {
-                    entityGroupId = createEntityGroup(node, entityGroupName).getId();
-                } else {
-                    entityGroupId = entityGroupNames.get(entityGroupName);
-                }
-                loadContext.getEntityGroupIdMap().put(node.get("id").get("id").asText(), entityGroupId);
+        JsonNode entityGroupsNode = readFileContentToNode("EntityGroups.json");
+        if (entityGroupsNode != null) {
+            for (JsonNode entityGroupNode : entityGroupsNode) {
+                loadContext.getEntityGroupIdMap().put(entityGroupNode.get("id").get("id").asText(),
+                        getEntityGroupId(entityGroupNames, entityGroupNode));
             }
         }
+    }
+
+    private EntityGroupId getEntityGroupId(Map<String, EntityGroupId> entityGroupNames, JsonNode node) {
+        String entityGroupName = node.get("name").asText();
+        EntityGroupId entityGroupId;
+        if (emptyDb || !entityGroupNames.containsKey(entityGroupName)) {
+            entityGroupId = createEntityGroup(node, entityGroupName).getId();
+        } else {
+            entityGroupId = entityGroupNames.get(entityGroupName);
+        }
+        return entityGroupId;
     }
 
     private EntityGroup createEntityGroup(JsonNode node, String entityGroupName) {

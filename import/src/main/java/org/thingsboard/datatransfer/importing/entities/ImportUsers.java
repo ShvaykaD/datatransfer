@@ -11,29 +11,22 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-public class ImportUsers {
+public class ImportUsers extends ImportEntity {
 
-    private final ObjectMapper mapper;
     private final RestClient tbRestClient;
-    private final String basePath;
     private final boolean emptyDb;
 
     public ImportUsers(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean emptyDb) {
+        super(mapper, basePath);
         this.tbRestClient = tbRestClient;
-        this.mapper = mapper;
-        this.basePath = basePath;
         this.emptyDb = emptyDb;
     }
-
 
     public void saveCustomersUsers(LoadContext loadContext, int limit) {
         Map<String, UserId> userEmailsMap = new HashMap<>();
@@ -45,26 +38,25 @@ public class ImportUsers {
                 }
             }
         }
-        JsonNode usersNode = null;
-        try {
-            usersNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Users.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read users file");
-        }
+        JsonNode usersNode = readFileContentToNode("Users.json");
         if (usersNode != null) {
             for (JsonNode userNode : usersNode) {
-                String email = userNode.get("email").asText();
-
-                UserId userId;
-                if (emptyDb || !userEmailsMap.containsKey(email)) {
-                    userId = createUser(userNode, loadContext).getId();
-                } else {
-                    userId = userEmailsMap.get(email);
-                }
+                UserId userId = getUserId(loadContext, userEmailsMap, userNode);
                 loadContext.getUserIdMap().put(userNode.get("id").get("id").asText(), userId);
                 saveUserCredentials(userNode, userId);
             }
         }
+    }
+
+    private UserId getUserId(LoadContext loadContext, Map<String, UserId> userEmailsMap, JsonNode userNode) {
+        String email = userNode.get("email").asText();
+        UserId userId;
+        if (emptyDb || !userEmailsMap.containsKey(email)) {
+            userId = createUser(userNode, loadContext).getId();
+        } else {
+            userId = userEmailsMap.get(email);
+        }
+        return userId;
     }
 
     private void saveUserCredentials(JsonNode node, UserId userId) {

@@ -1,17 +1,39 @@
 package org.thingsboard.datatransfer.importing.entities;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-abstract class ImportEntity {
+class ImportEntity {
+
+    protected final ObjectMapper mapper;
+    protected final String basePath;
+
+    ImportEntity(ObjectMapper mapper, String basePath) {
+        this.mapper = mapper;
+        this.basePath = basePath;
+    }
+
+    JsonNode readFileContentToNode(String fileName) {
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + fileName))));
+        } catch (IOException e) {
+            log.warn("Could not read [{}] file", fileName);
+        }
+        return jsonNode;
+    }
 
     void waitForPack(List<Future> resultList) {
         try {

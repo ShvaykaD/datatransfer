@@ -9,50 +9,43 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 import static org.thingsboard.datatransfer.importing.Import.NULL_UUID;
 
 @Slf4j
-public class ImportDevices {
+public class ImportDevices extends ImportEntity {
 
-    private final ObjectMapper mapper;
     private final RestClient tbRestClient;
-    private final String basePath;
     private final boolean emptyDb;
 
     public ImportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath, boolean emptyDb) {
+        super(mapper, basePath);
         this.tbRestClient = tbRestClient;
-        this.mapper = mapper;
-        this.basePath = basePath;
         this.emptyDb = emptyDb;
     }
 
     public void saveTenantDevices(LoadContext loadContext) {
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Devices.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read devices file");
-        }
-        if (jsonNode != null) {
-            for (JsonNode node : jsonNode) {
-
-                Device device;
-                if (emptyDb) {
-                    device = createDevice(node);
-                } else {
-                    Optional<Device> deviceOptional = tbRestClient.findDevice(node.get("name").asText());
-                    device = deviceOptional.orElseGet(() -> createDevice(node));
-                }
-                loadContext.getDeviceIdMap().put(node.get("id").get("id").asText(), device.getId());
-                assignDeviceToCustomer(loadContext, node, device);
-                createCredentialsForDevice(node, device);
+        JsonNode devicesNode = readFileContentToNode("Devices.json");
+        if (devicesNode != null) {
+            for (JsonNode deviceNode : devicesNode) {
+                Device device = findOrCreateDevice(deviceNode);
+                loadContext.getDeviceIdMap().put(deviceNode.get("id").get("id").asText(), device.getId());
+                assignDeviceToCustomer(loadContext, deviceNode, device);
+                createCredentialsForDevice(deviceNode, device);
             }
         }
+    }
+
+    private Device findOrCreateDevice(JsonNode node) {
+        Device device;
+        if (emptyDb) {
+            device = createDevice(node);
+        } else {
+            Optional<Device> deviceOptional = tbRestClient.findDevice(node.get("name").asText());
+            device = deviceOptional.orElseGet(() -> createDevice(node));
+        }
+        return device;
     }
 
     private void createCredentialsForDevice(JsonNode node, Device device) {

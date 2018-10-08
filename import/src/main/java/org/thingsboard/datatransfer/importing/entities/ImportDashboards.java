@@ -9,39 +9,28 @@ import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.Dashboard;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Iterator;
 
 /**
  * Created by mshvayka on 13.09.18.
  */
 @Slf4j
-public class ImportDashboards {
+public class ImportDashboards extends ImportEntity {
 
-    private final ObjectMapper mapper;
     private final RestClient tbRestClient;
-    private final String basePath;
 
     public ImportDashboards(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
+        super(mapper, basePath);
         this.tbRestClient = tbRestClient;
-        this.mapper = mapper;
-        this.basePath = basePath;
     }
 
     public void saveTenantDashboards(LoadContext loadContext) {
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Dashboards.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read dashboards file");
-        }
-        if (jsonNode != null) {
-            for (JsonNode node : jsonNode) {
-                Dashboard dashboard = createDashboard(node, loadContext);
-                loadContext.getDashboardIdMap().put(node.get("id").get("id").asText(), dashboard.getId());
-                assignDashboardToCustomers(loadContext, node, dashboard);
+        JsonNode dashboardsNode = readFileContentToNode("Dashboards.json");
+        if (dashboardsNode != null) {
+            for (JsonNode dashboardNode : dashboardsNode) {
+                Dashboard dashboard = createDashboard(dashboardNode, loadContext);
+                loadContext.getDashboardIdMap().put(dashboardNode.get("id").get("id").asText(), dashboard.getId());
+                assignDashboardToCustomers(loadContext, dashboardNode, dashboard);
             }
         }
     }

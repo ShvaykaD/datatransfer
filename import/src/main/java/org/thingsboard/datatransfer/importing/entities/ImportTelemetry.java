@@ -8,9 +8,6 @@ import org.thingsboard.datatransfer.importing.Client;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,23 +21,15 @@ import static org.thingsboard.datatransfer.importing.Import.THRESHOLD;
 @Slf4j
 public class ImportTelemetry extends ImportEntity {
 
-    private final ObjectMapper mapper;
-    private final String basePath;
     private final Client httpClient;
 
     public ImportTelemetry(ObjectMapper mapper, String basePath, Client httpClient) {
-        this.mapper = mapper;
-        this.basePath = basePath;
+        super(mapper, basePath);
         this.httpClient = httpClient;
     }
 
     public void saveTelemetry(LoadContext loadContext) {
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Telemetry.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read telemetry file");
-        }
+        JsonNode jsonNode = readFileContentToNode("Telemetry.json");
 
         if (jsonNode != null) {
             List<Future> resultList = new ArrayList<>();

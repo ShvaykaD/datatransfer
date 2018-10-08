@@ -8,9 +8,6 @@ import org.thingsboard.datatransfer.importing.Client;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -23,30 +20,20 @@ import static org.thingsboard.datatransfer.importing.Import.THRESHOLD;
 @Slf4j
 public class ImportAttributes extends ImportEntity {
 
-    private final ObjectMapper mapper;
-    private final String basePath;
     private final Client httpClient;
 
     public ImportAttributes(ObjectMapper mapper, String basePath, Client httpClient) {
-        this.mapper = mapper;
-        this.basePath = basePath;
+        super(mapper, basePath);
         this.httpClient = httpClient;
     }
 
     public void saveAttributes(LoadContext loadContext) {
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "Attributes.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read telemetry file");
-        }
-
+        JsonNode jsonNode = readFileContentToNode("Attributes.json");
         if (jsonNode != null) {
             List<Future> resultList = new ArrayList<>();
             for (JsonNode node : jsonNode) {
                 resultList.add(EXECUTOR_SERVICE.submit(() -> retryUntilDone(() -> {
-                    JsonNode attributesNode = node.get("attributes");
-                    for (JsonNode attributeNode : attributesNode) {
+                    for (JsonNode attributeNode : node.get("attributes")) {
                         ObjectNode savingNode = createSavingNode(attributeNode);
                         String entityType = node.get("entityType").asText();
                         EntityId entityId = getEntityId(loadContext, node, entityType);

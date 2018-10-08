@@ -7,37 +7,24 @@ import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 import static org.thingsboard.datatransfer.importing.Import.NULL_UUID;
 
 @Slf4j
-public class ImportSchedulerEvents {
+public class ImportSchedulerEvents extends ImportEntity {
 
-    private final ObjectMapper mapper;
     private final RestClient tbRestClient;
-    private final String basePath;
-
 
     public ImportSchedulerEvents(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
+        super(mapper, basePath);
         this.tbRestClient = tbRestClient;
-        this.mapper = mapper;
-        this.basePath = basePath;
     }
 
     public void saveSchedulerEvents(LoadContext loadContext) {
-        JsonNode jsonNode = null;
-        try {
-            jsonNode = mapper.readTree(new String(Files.readAllBytes(Paths.get(basePath + "SchedulerEvents.json"))));
-        } catch (IOException e) {
-            log.warn("Could not read scheduler events file");
-        }
-        if (jsonNode != null) {
-            for (JsonNode node : jsonNode) {
-                SchedulerEvent schedulerEvent = createSchedulerEvent(loadContext, node);
-                loadContext.getSchedulerEventIdMap().put(node.get("id").get("id").asText(), schedulerEvent.getId());
+        JsonNode schedulersNode = readFileContentToNode("SchedulerEvents.json");
+        if (schedulersNode != null) {
+            for (JsonNode schedulerNode : schedulersNode) {
+                SchedulerEvent schedulerEvent = createSchedulerEvent(loadContext, schedulerNode);
+                loadContext.getSchedulerEventIdMap().put(schedulerNode.get("id").get("id").asText(), schedulerEvent.getId());
             }
         }
     }
