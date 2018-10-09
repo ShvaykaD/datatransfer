@@ -4,12 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.Export;
 import org.thingsboard.datatransfer.exporting.SaveContext;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -25,17 +22,10 @@ public class ExportConverters extends ExportEntity {
     public void getConverters(SaveContext saveContext, int limit) {
         Optional<JsonNode> convertersOptional = tbRestClient.findConverters(limit);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(basePath + "Converters.json")))) {
-            if (convertersOptional.isPresent()) {
-                JsonNode convertersArray = convertersOptional.get().get("data");
-                String strFromType = "CONVERTER";
-
-                processEntityNodes(saveContext, limit, convertersArray, strFromType);
-
-                writer.write(mapper.writeValueAsString(convertersArray));
-            }
-        } catch (IOException e) {
-            log.warn("Could not export dashboards to file.");
+        if (convertersOptional.isPresent()) {
+            JsonNode convertersArray = convertersOptional.get().get("data");
+            processEntityNodes(saveContext, limit, convertersArray, "CONVERTER");
+            Export.writeToFile("Converters.json", convertersArray);
         }
     }
 }

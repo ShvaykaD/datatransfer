@@ -11,6 +11,7 @@ import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
 import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
 import org.thingsboard.datatransfer.exporting.entities.ExportEntityGroups;
 import org.thingsboard.datatransfer.exporting.entities.ExportIntegrations;
+import org.thingsboard.datatransfer.exporting.entities.ExportRuleChains;
 import org.thingsboard.datatransfer.exporting.entities.ExportSchedulerEvents;
 import org.thingsboard.datatransfer.exporting.entities.ExportUsers;
 
@@ -89,6 +90,9 @@ public class Export {
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);
             dashboards.getTenantDashboards(SAVE_CONTEXT, limit);
 
+            ExportRuleChains ruleChains = new ExportRuleChains(tbRestClient, MAPPER, BASE_PATH);
+            ruleChains.getRuleChains(limit);
+
             writeToFile("Relations.json", SAVE_CONTEXT.getRelationsArray());
             writeToFile("Telemetry.json", SAVE_CONTEXT.getTelemetryArray());
             writeToFile("Attributes.json", SAVE_CONTEXT.getAttributesArray());
@@ -101,7 +105,7 @@ public class Export {
         }
     }
 
-    private static void writeToFile(String fileName, JsonNode node) {
+    public static void writeToFile(String fileName, JsonNode node) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(BASE_PATH + fileName)))) {
             writer.write(MAPPER.writeValueAsString(node));
         } catch (IOException e) {
