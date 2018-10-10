@@ -4,17 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.importing.entities.ImportAssets;
-import org.thingsboard.datatransfer.importing.entities.ImportAttributes;
-import org.thingsboard.datatransfer.importing.entities.ImportConverters;
-import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
-import org.thingsboard.datatransfer.importing.entities.ImportDashboards;
-import org.thingsboard.datatransfer.importing.entities.ImportDevices;
-import org.thingsboard.datatransfer.importing.entities.ImportEntityGroups;
-import org.thingsboard.datatransfer.importing.entities.ImportIntegrations;
-import org.thingsboard.datatransfer.importing.entities.ImportRuleChains;
-import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
-import org.thingsboard.datatransfer.importing.entities.ImportUsers;
+import org.thingsboard.datatransfer.importing.entities.*;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -68,10 +58,11 @@ public class Import {
             tbRestClient.login(properties.getProperty("tbLogin"), properties.getProperty("tbPassword"));
             TB_TOKEN = tbRestClient.getToken();
 
+            String strTenantUserId = null;
+
             Optional<JsonNode> tenantUser = tbRestClient.getCurruntTenantUser();
             if (tenantUser.isPresent()) {
-                //TODO: finish
-                String strUserId = tenantUser.get().get("id").get("id").asText();
+                strTenantUserId = tenantUser.get().get("id").get("id").asText();
             }
 
             boolean emptyDb = Boolean.parseBoolean(properties.getProperty("emptyDb"));
@@ -102,8 +93,8 @@ public class Import {
                 integrations.saveIntegrations(LOAD_CONTEXT);
 
                 //TODO: finish
-                /*ImportSchedulerEvents schedulerEvents = new ImportSchedulerEvents(tbRestClient, mapper, BASE_PATH);
-                schedulerEvents.saveSchedulerEvents(LOAD_CONTEXT);*/
+                ImportSchedulerEvents schedulerEvents = new ImportSchedulerEvents(tbRestClient, mapper, BASE_PATH, strTenantUserId);
+                schedulerEvents.saveSchedulerEvents(LOAD_CONTEXT);
             }
 
             ImportDashboards dashboards = new ImportDashboards(tbRestClient, mapper, BASE_PATH);
@@ -129,7 +120,7 @@ public class Import {
             log.error("Could not read properties file {}", filename, e);
         }
     }
-
+    // TODO: 10.10.18 case TENANT; case BLOB_ENTITY
     private static void importRelations(ObjectMapper mapper, RestClient tbRestClient) {
         JsonNode relations = null;
         try {

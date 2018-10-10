@@ -109,7 +109,7 @@ public class Export {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(BASE_PATH + fileName)))) {
             writer.write(MAPPER.writeValueAsString(node));
         } catch (IOException e) {
-            log.warn("Could not write data to file: {}", node);
+            log.warn("Could not write data {} to file: {}", node, fileName);
         }
     }
 
