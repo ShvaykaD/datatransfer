@@ -99,8 +99,10 @@ public class ImportEntityGroups extends ImportEntity {
                             break;
                     }
                 }
-                tbRestClient.addEntitiesToEntityGroup(loadContext.getEntityGroupIdMap().get(groupEntityNode.get("entityGroupId").asText()).toString(),
-                        strEntityIds);
+                if (!strEntityIds.isEmpty()) {
+                    tbRestClient.addEntitiesToEntityGroup(loadContext.getEntityGroupIdMap().get(groupEntityNode.get("entityGroupId").asText()).toString(),
+                            strEntityIds);
+                }
             }
         }
     }
