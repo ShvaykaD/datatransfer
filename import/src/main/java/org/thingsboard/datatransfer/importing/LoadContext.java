@@ -8,6 +8,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.id.UserId;
 
@@ -26,5 +27,6 @@ public class LoadContext {
     private final Map<String, IntegrationId> integrationIdMap = new HashMap<>();
     private final Map<String, SchedulerEventId> schedulerEventIdMap = new HashMap<>();
     private final Map<String, UserId> userIdMap = new HashMap<>();
+    private final Map<String, RuleChainId> ruleChainIdMap = new HashMap<>();
 
 }

@@ -12,6 +12,7 @@ import org.thingsboard.datatransfer.importing.entities.ImportDashboards;
 import org.thingsboard.datatransfer.importing.entities.ImportDevices;
 import org.thingsboard.datatransfer.importing.entities.ImportEntityGroups;
 import org.thingsboard.datatransfer.importing.entities.ImportIntegrations;
+import org.thingsboard.datatransfer.importing.entities.ImportRuleChains;
 import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
 import org.thingsboard.datatransfer.importing.entities.ImportUsers;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -69,7 +70,7 @@ public class Import {
 
             Optional<JsonNode> tenantUser = tbRestClient.getCurruntTenantUser();
             if (tenantUser.isPresent()) {
-                //TODO
+                //TODO: finish
                 String strUserId = tenantUser.get().get("id").get("id").asText();
             }
 
@@ -100,7 +101,7 @@ public class Import {
                 ImportIntegrations integrations = new ImportIntegrations(tbRestClient, mapper, BASE_PATH, false);
                 integrations.saveIntegrations(LOAD_CONTEXT);
 
-                //TODO
+                //TODO: finish
                 /*ImportSchedulerEvents schedulerEvents = new ImportSchedulerEvents(tbRestClient, mapper, BASE_PATH);
                 schedulerEvents.saveSchedulerEvents(LOAD_CONTEXT);*/
             }
@@ -110,6 +111,10 @@ public class Import {
 
             ImportUsers users = new ImportUsers(tbRestClient, mapper, BASE_PATH, emptyDb);
             users.saveCustomersUsers(LOAD_CONTEXT, limit);
+
+            //TODO: finish
+            ImportRuleChains ruleChains = new ImportRuleChains(tbRestClient, mapper, BASE_PATH);
+            ruleChains.saveRuleChains(LOAD_CONTEXT);
 
             ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
             telemetry.saveTelemetry(LOAD_CONTEXT);
