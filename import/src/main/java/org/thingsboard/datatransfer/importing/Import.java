@@ -4,7 +4,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.importing.entities.*;
+import org.thingsboard.datatransfer.importing.entities.ImportAssets;
+import org.thingsboard.datatransfer.importing.entities.ImportAttributes;
+import org.thingsboard.datatransfer.importing.entities.ImportConverters;
+import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
+import org.thingsboard.datatransfer.importing.entities.ImportDashboards;
+import org.thingsboard.datatransfer.importing.entities.ImportDevices;
+import org.thingsboard.datatransfer.importing.entities.ImportEntityGroups;
+import org.thingsboard.datatransfer.importing.entities.ImportIntegrations;
+import org.thingsboard.datatransfer.importing.entities.ImportRuleChains;
+import org.thingsboard.datatransfer.importing.entities.ImportSchedulerEvents;
+import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
+import org.thingsboard.datatransfer.importing.entities.ImportUsers;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -59,7 +70,6 @@ public class Import {
             TB_TOKEN = tbRestClient.getToken();
 
             String strTenantUserId = null;
-
             Optional<JsonNode> tenantUser = tbRestClient.getCurruntTenantUser();
             if (tenantUser.isPresent()) {
                 strTenantUserId = tenantUser.get().get("id").get("id").asText();
@@ -104,7 +114,7 @@ public class Import {
             users.saveCustomersUsers(LOAD_CONTEXT, limit);
 
             //TODO: finish
-            ImportRuleChains ruleChains = new ImportRuleChains(tbRestClient, mapper, BASE_PATH);
+            ImportRuleChains ruleChains = new ImportRuleChains(tbRestClient, mapper, BASE_PATH, strTenantUserId);
             ruleChains.saveRuleChains(LOAD_CONTEXT);
 
             ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
@@ -120,6 +130,7 @@ public class Import {
             log.error("Could not read properties file {}", filename, e);
         }
     }
+
     // TODO: 10.10.18 case TENANT; case BLOB_ENTITY
     private static void importRelations(ObjectMapper mapper, RestClient tbRestClient) {
         JsonNode relations = null;
