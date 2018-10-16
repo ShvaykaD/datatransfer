@@ -26,14 +26,14 @@ public class ImportRuleChains extends ImportEntity {
     private static final String TB_ALARMS_COUNT_NODE = "org.thingsboard.rule.engine.analytics.latest.alarm.TbAlarmsCountNode";
     private static final String TB_SIMPLE_AGG_MSG_NODE = "org.thingsboard.rule.engine.analytics.incoming.TbSimpleAggMsgNode";
     private static final String TB_AGG_LATEST_TELEMETRY_NODE = "org.thingsboard.rule.engine.analytics.latest.telemetry.TbAggLatestTelemetryNode";
+    private static final String USER_ID = "7c82bf30-4d61-11e8-ad73-455e6191039d";
+    private static final String DASHBOARD_ID = "62097e80-6fa0-11e8-9b36-a959bde06125";
 
     private final RestClient tbRestClient;
-    private final String tenantUserId;
 
-    public ImportRuleChains(RestClient tbRestClient, ObjectMapper mapper, String basePath, String tenantUserId) {
+    public ImportRuleChains(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
         super(mapper, basePath);
         this.tbRestClient = tbRestClient;
-        this.tenantUserId = tenantUserId;
     }
 
     public void saveRuleChains(LoadContext loadContext) throws IOException {
@@ -94,7 +94,7 @@ public class ImportRuleChains extends ImportEntity {
 
     private ObjectNode createRuleNodeConfiguration(LoadContext loadContext, RuleNode oldRuleNode) {
         ObjectNode ruleNodeConfiguration = (ObjectNode) oldRuleNode.getConfiguration();
-        String ruleNodeType = ruleNodeConfiguration.get("type").asText();
+        String ruleNodeType = oldRuleNode.getType();
         switch (ruleNodeType) {
             case TB_CHECK_RELATION_NODE:
                 changeRuleNodeConfiguration(loadContext, ruleNodeConfiguration, "entityType", "entityId");
@@ -113,10 +113,14 @@ public class ImportRuleChains extends ImportEntity {
                     if (loadContext.getUserIdMap().containsKey(userIdStr)) {
                         reportConfigNode.put("userId", loadContext.getUserIdMap().get(userIdStr).toString());
                     } else {
-                        reportConfigNode.put("userId", tenantUserId);
+                        reportConfigNode.put("userId", USER_ID);
                     }
-                    reportConfigNode.put("dashboardId", loadContext.getDashboardIdMap()
-                            .get(reportConfigNode.get("dashboardId").asText()).toString());
+                    String dashboardIdStr = reportConfigNode.get("dashboardId").asText();
+                    if (loadContext.getDashboardIdMap().containsKey(dashboardIdStr)) {
+                        reportConfigNode.put("dashboardId", loadContext.getDashboardIdMap().get(dashboardIdStr).toString());
+                    } else {
+                        reportConfigNode.put("dashboardId", DASHBOARD_ID);
+                    }
                 }
                 break;
             case TB_ALARMS_COUNT_NODE:

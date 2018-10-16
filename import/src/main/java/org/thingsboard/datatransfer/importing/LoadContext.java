@@ -2,6 +2,7 @@ package org.thingsboard.datatransfer.importing;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.BlobEntityId;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -28,5 +29,6 @@ public class LoadContext {
     private final Map<String, SchedulerEventId> schedulerEventIdMap = new HashMap<>();
     private final Map<String, UserId> userIdMap = new HashMap<>();
     private final Map<String, RuleChainId> ruleChainIdMap = new HashMap<>();
+    private final Map<String, BlobEntityId> blobEntityIdMap = new HashMap<>();
 
 }

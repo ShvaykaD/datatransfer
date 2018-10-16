@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.exporting.entities.ExportAssets;
+import org.thingsboard.datatransfer.exporting.entities.ExportBlobEntities;
 import org.thingsboard.datatransfer.exporting.entities.ExportConverters;
 import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
 import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
@@ -85,6 +86,9 @@ public class Export {
 
                 ExportSchedulerEvents schedulerEvents = new ExportSchedulerEvents(tbRestClient, MAPPER, BASE_PATH);
                 schedulerEvents.getSchedulerEvents(SAVE_CONTEXT);
+
+                ExportBlobEntities blobEntities = new ExportBlobEntities(tbRestClient, MAPPER, BASE_PATH);
+                blobEntities.getTenantBlobEntities(limit);
             }
 
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);

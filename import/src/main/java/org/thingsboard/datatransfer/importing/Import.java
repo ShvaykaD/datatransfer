@@ -114,7 +114,7 @@ public class Import {
             users.saveCustomersUsers(LOAD_CONTEXT, limit);
 
             //TODO: finish
-            ImportRuleChains ruleChains = new ImportRuleChains(tbRestClient, mapper, BASE_PATH, strTenantUserId);
+            ImportRuleChains ruleChains = new ImportRuleChains(tbRestClient, mapper, BASE_PATH);
             ruleChains.saveRuleChains(LOAD_CONTEXT);
 
             ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
