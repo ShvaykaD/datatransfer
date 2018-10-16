@@ -94,7 +94,9 @@ public class ImportDashboards extends ImportEntity {
                 filterNode.set(aliasType, arrayNode);
                 break;
             case "stateEntity":
-                changeEntityId(loadContext, (ObjectNode) filterNode.get("defaultStateEntity"));
+                if(!filterNode.get("defaultStateEntity").isNull()){
+                    changeEntityId(loadContext, (ObjectNode) filterNode.get("defaultStateEntity"));
+                }
                 break;
             case "relationsQuery":
             case "assetSearchQuery":
@@ -138,6 +140,18 @@ public class ImportDashboards extends ImportEntity {
                 break;
             case "CUSTOMER":
                 objectNode.put("id", loadContext.getCustomerIdMap().get(id).toString());
+                break;
+            case "DASHBOARD":
+                objectNode.put("id", loadContext.getDashboardIdMap().get(id).toString());
+                break;
+            case "CONVERTER":
+                objectNode.put("id", loadContext.getConverterIdMap().get(id).toString());
+                break;
+            case "INTEGRATION":
+                objectNode.put("id", loadContext.getIntegrationIdMap().get(id).toString());
+                break;
+            case "SCHEDULER_EVENT":
+                objectNode.put("id", loadContext.getSchedulerEventIdMap().get(id).toString());
                 break;
             default:
                 log.warn("Such entity type [{}] is not supported!", entityType);
