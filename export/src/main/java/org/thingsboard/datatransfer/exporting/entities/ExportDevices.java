@@ -36,13 +36,8 @@ public class ExportDevices extends ExportEntity {
 
                 addDeviceCredentialsToDeviceNode((ObjectNode) deviceNode, strDeviceId);
 
-                String telemetryKeys = getTelemetryKeys(strFromType, strDeviceId);
-                if (telemetryKeys != null && telemetryKeys.length() != 0) {
-                    Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strDeviceId,
-                            telemetryKeys, limit, 0L, System.currentTimeMillis());
-                    telemetryNodeOptional.ifPresent(jsonNode ->
-                            saveContext.getTelemetryArray().add(createNode(strFromType, strDeviceId, jsonNode, "telemetry")));
-                }
+                //getTelemetry(saveContext, limit, strFromType, strDeviceId);
+                test(saveContext, strFromType, strDeviceId);
 
                 ObjectNode attributesNode = getAttributes(strFromType, strDeviceId);
                 if (attributesNode != null) {

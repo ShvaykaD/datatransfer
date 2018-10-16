@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.Export;
 import org.thingsboard.datatransfer.exporting.SaveContext;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 public class ExportEntity {
@@ -64,7 +66,7 @@ public class ExportEntity {
         return null;
     }
 
-    ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
+    private ObjectNode createNode(String strFromType, String strEntityId, JsonNode node, String dataType) {
         ObjectNode resultNode = mapper.createObjectNode();
         resultNode.put("entityType", strFromType);
         resultNode.put("entityId", strEntityId);
@@ -81,18 +83,67 @@ public class ExportEntity {
                 saveContext.getRelationsArray().add(relationsFromEntityNode);
             }
 
-            String telemetryKeys = getTelemetryKeys(strFromType, strEntityId);
+            //getTelemetry(saveContext, limit, strFromType, strEntityId);
+            test(saveContext, strFromType, strEntityId);
 
-            if (telemetryKeys != null && telemetryKeys.length() != 0) {
-                Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strEntityId,
-                        telemetryKeys, limit, 0L, System.currentTimeMillis());
-                telemetryNodeOptional.ifPresent(jsonNode ->
-                        saveContext.getTelemetryArray().add(createNode(strFromType, strEntityId, jsonNode, "telemetry")));
-            }
+
             ObjectNode attributesNode = getAttributes(strFromType, strEntityId);
             if (attributesNode != null) {
                 saveContext.getAttributesArray().add(attributesNode);
             }
+        }
+    }
+
+    void getTelemetry(SaveContext saveContext, int limit, String strFromType, String strEntityId) {
+        String telemetryKeys = getTelemetryKeys(strFromType, strEntityId);
+        if (telemetryKeys != null && telemetryKeys.length() != 0) {
+            Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strEntityId,
+                    telemetryKeys, limit, 0L, System.currentTimeMillis());
+            telemetryNodeOptional.ifPresent(jsonNode ->
+                    saveContext.getTelemetryArray().add(createNode(strFromType, strEntityId, jsonNode, "telemetry")));
+        }
+    }
+
+    void test(SaveContext saveContext, String strFromType, String strEntityId) {
+        String telemetryKeys = getTelemetryKeys(strFromType, strEntityId);
+        if (telemetryKeys != null && telemetryKeys.length() != 0) {
+
+
+
+
+
+
+            long startTs = 1420070400000L;
+            long endTs = startTs + 2678400000L; // 1 month
+
+
+            do {
+
+                Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strEntityId,
+                        telemetryKeys, 2147483647, startTs, endTs);
+                if (telemetryNodeOptional.isPresent()) {
+                    JsonNode jsonNode = telemetryNodeOptional.get();
+                    if (jsonNode.size() > 0) {
+                        saveContext.getTelemetryArray().add(createNode(strFromType, strEntityId, jsonNode, "telemetry"));
+                    }
+                }
+
+                if (saveContext.getTelemetryArray().size() == 50) {
+                    Export.writeToFile(UUID.randomUUID() + "_Telemetry.json", saveContext.getTelemetryArray());
+                    saveContext.setTelemetryArray(mapper.createArrayNode());
+                }
+
+
+                startTs = endTs;
+                endTs = startTs + 2678400000L;
+
+            } while (endTs - System.currentTimeMillis() < 2678400000L);
+
+
+            if (saveContext.getTelemetryArray().size() > 0) {
+                Export.writeToFile(UUID.randomUUID() + "_Telemetry.json", saveContext.getTelemetryArray());
+            }
+
         }
     }
 

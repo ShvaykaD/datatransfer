@@ -30,13 +30,8 @@ public class ExportEntityGroups extends ExportEntity {
                     entitiesOptional.ifPresent(jsonNode ->
                             saveContext.getEntitiesInGroups().add(createEntityNode(strEntityId, (ObjectNode) jsonNode)));
 
-                    String telemetryKeys = getTelemetryKeys(strFromType, strEntityId);
-                    if (telemetryKeys != null && telemetryKeys.length() != 0) {
-                        Optional<JsonNode> telemetryNodeOptional = tbRestClient.getTelemetry(strFromType, strEntityId,
-                                telemetryKeys, limit, 0L, System.currentTimeMillis());
-                        telemetryNodeOptional.ifPresent(telemetryNode -> saveContext.getTelemetryArray().add(
-                                createNode(strFromType, strEntityId, telemetryNode, "telemetry")));
-                    }
+                    //getTelemetry(saveContext, limit, strFromType, strEntityId);
+                    test(saveContext, strFromType, strEntityId);
 
                     ObjectNode attributesNode = getAttributes(strFromType, strEntityId);
                     if (attributesNode != null) {

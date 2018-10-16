@@ -8,6 +8,7 @@ import org.thingsboard.datatransfer.importing.Client;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -29,33 +30,38 @@ public class ImportTelemetry extends ImportEntity {
     }
 
     public void saveTelemetry(LoadContext loadContext) {
-        JsonNode jsonNode = readFileContentToNode("Telemetry.json");
+        File dir = new File(basePath);
+        for (File file : dir.listFiles()) {
+            if (file.getName().endsWith("_Telemetry.json")) {
+                JsonNode jsonNode = readFileContentToNode(file.getName());
 
-        if (jsonNode != null) {
-            List<Future> resultList = new ArrayList<>();
-            for (JsonNode node : jsonNode) {
-                JsonNode telemetryNode = node.get("telemetry");
-                for (Iterator<String> iterator = telemetryNode.fieldNames(); iterator.hasNext(); ) {
-                    String field = iterator.next();
-                    JsonNode fieldArray = telemetryNode.get(field);
-                    for (JsonNode object : fieldArray) {
-                        resultList.add(EXECUTOR_SERVICE.submit(() -> retryUntilDone(() -> {
-                            ObjectNode savingNode = createSavingNode(field, object);
-                            String entityType = node.get("entityType").asText();
-                            EntityId entityId = getEntityId(loadContext, node, entityType);
-                            log.info("Pushing telemetry to {} [{}]", entityType, entityId);
-                            httpClient.sendData(TB_BASE_URL + "/api/plugins/telemetry/" + entityType + "/" +
-                                    entityId.toString() + "/timeseries/data", savingNode, TB_TOKEN);
-                            return true;
-                        })));
+                if (jsonNode != null) {
+                    List<Future> resultList = new ArrayList<>();
+                    for (JsonNode node : jsonNode) {
+                        JsonNode telemetryNode = node.get("telemetry");
+                        for (Iterator<String> iterator = telemetryNode.fieldNames(); iterator.hasNext(); ) {
+                            String field = iterator.next();
+                            JsonNode fieldArray = telemetryNode.get(field);
+                            for (JsonNode object : fieldArray) {
+                                resultList.add(EXECUTOR_SERVICE.submit(() -> retryUntilDone(() -> {
+                                    ObjectNode savingNode = createSavingNode(field, object);
+                                    String entityType = node.get("entityType").asText();
+                                    EntityId entityId = getEntityId(loadContext, node, entityType);
+                                    log.info("Pushing telemetry to {} [{}]", entityType, entityId);
+                                    httpClient.sendData(TB_BASE_URL + "/api/plugins/telemetry/" + entityType + "/" +
+                                            entityId.toString() + "/timeseries/data", savingNode, TB_TOKEN);
+                                    return true;
+                                })));
+                            }
+                        }
+
+                        if (resultList.size() > THRESHOLD) {
+                            waitForPack(resultList);
+                        }
                     }
-                }
-
-                if (resultList.size() > THRESHOLD) {
                     waitForPack(resultList);
                 }
             }
-            waitForPack(resultList);
         }
     }
 

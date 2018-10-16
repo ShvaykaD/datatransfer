@@ -91,7 +91,6 @@ public class Export {
             ruleChains.getRuleChains(limit);
 
             writeToFile("Relations.json", SAVE_CONTEXT.getRelationsArray());
-            writeToFile("Telemetry.json", SAVE_CONTEXT.getTelemetryArray());
             writeToFile("Attributes.json", SAVE_CONTEXT.getAttributesArray());
             writeToFile("EntityGroups.json", SAVE_CONTEXT.getEntityGroups());
             writeToFile("EntitiesInGroups.json", SAVE_CONTEXT.getEntitiesInGroups());
