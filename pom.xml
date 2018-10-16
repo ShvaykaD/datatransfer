@@ -22,7 +22,7 @@
         <lombok.version>1.16.18</lombok.version>
         <slf4j.version>1.6.6</slf4j.version>
         <jackson.version>2.9.3</jackson.version>
-        <thingsboard.version>2.1.1PE-SNAPSHOT</thingsboard.version>
+        <thingsboard.version>2.2.0PE-SNAPSHOT</thingsboard.version>
         <httpclient.version>4.5.4</httpclient.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
     </properties>

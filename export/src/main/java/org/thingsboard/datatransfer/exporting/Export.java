@@ -4,18 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.exporting.entities.ExportAssets;
-import org.thingsboard.datatransfer.exporting.entities.ExportBlobEntities;
-import org.thingsboard.datatransfer.exporting.entities.ExportConverters;
-import org.thingsboard.datatransfer.exporting.entities.ExportCustomers;
-import org.thingsboard.datatransfer.exporting.entities.ExportDashboards;
-import org.thingsboard.datatransfer.exporting.entities.ExportDevices;
-import org.thingsboard.datatransfer.exporting.entities.ExportEntityGroups;
-import org.thingsboard.datatransfer.exporting.entities.ExportIntegrations;
-import org.thingsboard.datatransfer.exporting.entities.ExportRuleChains;
-import org.thingsboard.datatransfer.exporting.entities.ExportSchedulerEvents;
-import org.thingsboard.datatransfer.exporting.entities.ExportUsers;
-
+import org.thingsboard.datatransfer.exporting.entities.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -89,6 +78,10 @@ public class Export {
 
                 ExportBlobEntities blobEntities = new ExportBlobEntities(tbRestClient, MAPPER, BASE_PATH);
                 blobEntities.getTenantBlobEntities(limit);
+
+                ExportEntityViews entityViews = new ExportEntityViews(tbRestClient, MAPPER, BASE_PATH);
+                entityViews.getTenantEntityViews(SAVE_CONTEXT, limit);
+
             }
 
             ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);

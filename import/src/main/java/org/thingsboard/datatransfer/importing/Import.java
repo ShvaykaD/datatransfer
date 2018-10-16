@@ -4,18 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
-import org.thingsboard.datatransfer.importing.entities.ImportAssets;
-import org.thingsboard.datatransfer.importing.entities.ImportAttributes;
-import org.thingsboard.datatransfer.importing.entities.ImportConverters;
-import org.thingsboard.datatransfer.importing.entities.ImportCustomers;
-import org.thingsboard.datatransfer.importing.entities.ImportDashboards;
-import org.thingsboard.datatransfer.importing.entities.ImportDevices;
-import org.thingsboard.datatransfer.importing.entities.ImportEntityGroups;
-import org.thingsboard.datatransfer.importing.entities.ImportIntegrations;
-import org.thingsboard.datatransfer.importing.entities.ImportRuleChains;
-import org.thingsboard.datatransfer.importing.entities.ImportSchedulerEvents;
-import org.thingsboard.datatransfer.importing.entities.ImportTelemetry;
-import org.thingsboard.datatransfer.importing.entities.ImportUsers;
+import org.thingsboard.datatransfer.importing.entities.*;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -96,17 +85,21 @@ public class Import {
                 entityGroups.saveTenantEntityGroups(LOAD_CONTEXT);
                 entityGroups.addTenantEntitiesToGroups(LOAD_CONTEXT);
 
+                ImportEntityViews entityViews = new ImportEntityViews(tbRestClient, mapper, BASE_PATH, false);
+                entityViews.saveTenantEntityViews(LOAD_CONTEXT, limit);
+
                 ImportConverters converters = new ImportConverters(tbRestClient, mapper, BASE_PATH, false);
                 converters.saveConverters(LOAD_CONTEXT, limit);
 
                 ImportIntegrations integrations = new ImportIntegrations(tbRestClient, mapper, BASE_PATH, false);
                 integrations.saveIntegrations(LOAD_CONTEXT);
 
-                //TODO: finish
                 ImportSchedulerEvents schedulerEvents = new ImportSchedulerEvents(tbRestClient, mapper, BASE_PATH, strTenantUserId);
                 schedulerEvents.saveSchedulerEvents(LOAD_CONTEXT);
+
             }
 
+            //TODO: finish
             ImportDashboards dashboards = new ImportDashboards(tbRestClient, mapper, BASE_PATH);
             dashboards.saveTenantDashboards(LOAD_CONTEXT);
 
@@ -116,6 +109,7 @@ public class Import {
             //TODO: finish
             ImportRuleChains ruleChains = new ImportRuleChains(tbRestClient, mapper, BASE_PATH);
             ruleChains.saveRuleChains(LOAD_CONTEXT);
+
 
             ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
             telemetry.saveTelemetry(LOAD_CONTEXT);
