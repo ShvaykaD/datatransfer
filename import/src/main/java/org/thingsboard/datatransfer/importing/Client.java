@@ -1,5 +1,6 @@
 package org.thingsboard.datatransfer.importing;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.httpclient.HttpClient;
@@ -24,7 +25,7 @@ public class Client {
         this.client = new HttpClient(connectionManager);
     }
 
-    public int sendData(String uri, ObjectNode node, String token) throws IOException {
+    public int sendData(String uri, JsonNode node, String token) throws IOException {
         PostMethod post = new PostMethod(uri);
         post.setRequestEntity(new StringRequestEntity(node.toString(), ContentType.APPLICATION_JSON.getMimeType(), "UTF-8"));
         post.setRequestHeader("Accept", "application/json");

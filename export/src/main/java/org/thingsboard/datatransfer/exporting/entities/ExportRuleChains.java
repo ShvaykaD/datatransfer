@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.Client;
 import org.thingsboard.datatransfer.exporting.Export;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -16,8 +17,8 @@ import java.util.UUID;
 @Slf4j
 public class ExportRuleChains extends ExportEntity {
 
-    public ExportRuleChains(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath);
+    public ExportRuleChains(RestClient tbRestClient, ObjectMapper mapper, String basePath, Client httpClient) {
+        super(tbRestClient, mapper, basePath, httpClient);
     }
 
     public void getRuleChains(int limit) throws JsonProcessingException {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.Client;
 import org.thingsboard.datatransfer.exporting.Export;
 import org.thingsboard.datatransfer.exporting.SaveContext;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -19,8 +20,8 @@ public class ExportDashboards extends ExportEntity {
 
     private final ArrayNode dashboardNode;
 
-    public ExportDashboards(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath);
+    public ExportDashboards(RestClient tbRestClient, ObjectMapper mapper, String basePath, Client httpClient) {
+        super(tbRestClient, mapper, basePath, httpClient);
         dashboardNode = mapper.createArrayNode();
     }
 

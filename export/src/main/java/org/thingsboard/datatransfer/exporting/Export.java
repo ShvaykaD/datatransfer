@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.exporting.entities.*;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,14 +23,15 @@ public class Export {
     private static final SaveContext SAVE_CONTEXT = new SaveContext(MAPPER);
 
     private static String BASE_PATH;
-    private static String TB_TOKEN;
+    public static String TB_TOKEN;
+    public static String TB_BASE_URL;
 
-    private static int THRESHOLD;
-    private static ExecutorService EXECUTOR_SERVICE;
+    public static int THRESHOLD;
+    public static ExecutorService EXECUTOR_SERVICE;
 
     public static void main(String[] args) {
         Properties properties = new Properties();
-        Client httpClient = new Client();
+        Client httpClient = new Client(MAPPER);
         String filename;
         if (args.length > 0) {
             filename = args[0];
@@ -46,48 +48,49 @@ public class Export {
             THRESHOLD = Integer.parseInt(properties.getProperty("threshold"));
             EXECUTOR_SERVICE = Executors.newFixedThreadPool(Integer.parseInt(properties.getProperty("threadsCount")));
 
-            RestClient tbRestClient = new RestClient(properties.getProperty("tbBaseURL"));
+            TB_BASE_URL = properties.getProperty("tbBaseURL");
+            RestClient tbRestClient = new RestClient(TB_BASE_URL);
             tbRestClient.login(properties.getProperty("tbLogin"), properties.getProperty("tbPassword"));
             TB_TOKEN = tbRestClient.getToken();
 
             log.info("Start exporting...");
-            ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH);
+            ExportCustomers customers = new ExportCustomers(tbRestClient, MAPPER, BASE_PATH, httpClient);
             customers.getTenantCustomers(SAVE_CONTEXT, limit);
 
-            ExportUsers users = new ExportUsers(tbRestClient, MAPPER, BASE_PATH);
+            ExportUsers users = new ExportUsers(tbRestClient, MAPPER, BASE_PATH, httpClient);
             users.getAllCustomerUsers(limit);
 
-            ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH);
+            ExportDevices devices = new ExportDevices(tbRestClient, MAPPER, BASE_PATH, httpClient);
             devices.getTenantDevices(SAVE_CONTEXT, limit);
 
-            ExportAssets assets = new ExportAssets(tbRestClient, MAPPER, BASE_PATH);
+            ExportAssets assets = new ExportAssets(tbRestClient, MAPPER, BASE_PATH, httpClient);
             assets.getTenantAssets(SAVE_CONTEXT, limit);
 
             if (isPe) {
-                ExportEntityGroups entityGroups = new ExportEntityGroups(tbRestClient, MAPPER, BASE_PATH);
+                ExportEntityGroups entityGroups = new ExportEntityGroups(tbRestClient, MAPPER, BASE_PATH, httpClient);
                 entityGroups.getEntityGroups(SAVE_CONTEXT, limit);
 
-                ExportIntegrations integrations = new ExportIntegrations(tbRestClient, MAPPER, BASE_PATH);
+                ExportIntegrations integrations = new ExportIntegrations(tbRestClient, MAPPER, BASE_PATH, httpClient);
                 integrations.getIntegrations(SAVE_CONTEXT, limit);
 
-                ExportConverters converters = new ExportConverters(tbRestClient, MAPPER, BASE_PATH);
+                ExportConverters converters = new ExportConverters(tbRestClient, MAPPER, BASE_PATH, httpClient);
                 converters.getConverters(SAVE_CONTEXT, limit);
 
-                ExportSchedulerEvents schedulerEvents = new ExportSchedulerEvents(tbRestClient, MAPPER, BASE_PATH);
+                ExportSchedulerEvents schedulerEvents = new ExportSchedulerEvents(tbRestClient, MAPPER, BASE_PATH, httpClient);
                 schedulerEvents.getSchedulerEvents(SAVE_CONTEXT);
 
-                ExportBlobEntities blobEntities = new ExportBlobEntities(tbRestClient, MAPPER, BASE_PATH);
+                ExportBlobEntities blobEntities = new ExportBlobEntities(tbRestClient, MAPPER, BASE_PATH, httpClient);
                 blobEntities.getTenantBlobEntities(limit);
 
-                ExportEntityViews entityViews = new ExportEntityViews(tbRestClient, MAPPER, BASE_PATH);
+                ExportEntityViews entityViews = new ExportEntityViews(tbRestClient, MAPPER, BASE_PATH, httpClient);
                 entityViews.getTenantEntityViews(SAVE_CONTEXT, limit);
 
             }
 
-            ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH);
+            ExportDashboards dashboards = new ExportDashboards(tbRestClient, MAPPER, BASE_PATH, httpClient);
             dashboards.getTenantDashboards(SAVE_CONTEXT, limit);
 
-            ExportRuleChains ruleChains = new ExportRuleChains(tbRestClient, MAPPER, BASE_PATH);
+            ExportRuleChains ruleChains = new ExportRuleChains(tbRestClient, MAPPER, BASE_PATH, httpClient);
             ruleChains.getRuleChains(limit);
 
             writeToFile("Relations.json", SAVE_CONTEXT.getRelationsArray());
@@ -96,6 +99,7 @@ public class Export {
             writeToFile("EntitiesInGroups.json", SAVE_CONTEXT.getEntitiesInGroups());
 
             log.info("Ended exporting successfully!");
+            EXECUTOR_SERVICE.shutdown();
         } catch (Exception e) {
             log.error("Could not read properties file {}", filename, e);
         }

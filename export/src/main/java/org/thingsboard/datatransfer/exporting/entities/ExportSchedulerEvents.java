@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.Client;
 import org.thingsboard.datatransfer.exporting.Export;
 import org.thingsboard.datatransfer.exporting.SaveContext;
 import org.thingsboard.server.common.data.id.SchedulerEventId;
@@ -16,8 +17,8 @@ public class ExportSchedulerEvents extends ExportEntity {
 
     private ArrayNode schedulerEventsArrayNode;
 
-    public ExportSchedulerEvents(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath);
+    public ExportSchedulerEvents(RestClient tbRestClient, ObjectMapper mapper, String basePath, Client httpClient) {
+        super(tbRestClient, mapper, basePath, httpClient);
         schedulerEventsArrayNode = mapper.createArrayNode();
     }
 

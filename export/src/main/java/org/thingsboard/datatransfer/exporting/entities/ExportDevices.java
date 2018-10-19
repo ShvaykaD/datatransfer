@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
+import org.thingsboard.datatransfer.exporting.Client;
 import org.thingsboard.datatransfer.exporting.Export;
 import org.thingsboard.datatransfer.exporting.SaveContext;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -16,8 +17,8 @@ import java.util.UUID;
 @Slf4j
 public class ExportDevices extends ExportEntity {
 
-    public ExportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath) {
-        super(tbRestClient, mapper, basePath);
+    public ExportDevices(RestClient tbRestClient, ObjectMapper mapper, String basePath, Client httpClient) {
+        super(tbRestClient, mapper, basePath, httpClient);
     }
 
     public void getTenantDevices(SaveContext saveContext, int limit) {
@@ -36,8 +37,7 @@ public class ExportDevices extends ExportEntity {
 
                 addDeviceCredentialsToDeviceNode((ObjectNode) deviceNode, strDeviceId);
 
-                //getTelemetry(saveContext, limit, strFromType, strDeviceId);
-                test(saveContext, strFromType, strDeviceId);
+                gavnoCodeAsync(saveContext, strFromType, strDeviceId);
 
                 ObjectNode attributesNode = getAttributes(strFromType, strDeviceId);
                 if (attributesNode != null) {

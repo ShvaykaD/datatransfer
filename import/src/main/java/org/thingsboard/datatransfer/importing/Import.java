@@ -74,11 +74,18 @@ public class Import {
             ImportCustomers customers = new ImportCustomers(tbRestClient, mapper, BASE_PATH, emptyDb);
             customers.saveTenantCustomers(LOAD_CONTEXT);
 
+            log.info("Start importing...devices");
+
+
             ImportDevices devices = new ImportDevices(tbRestClient, mapper, BASE_PATH, emptyDb);
             devices.saveTenantDevices(LOAD_CONTEXT);
 
+            log.info("Start importing...assets");
+
             ImportAssets assets = new ImportAssets(tbRestClient, mapper, BASE_PATH, emptyDb);
             assets.saveTenantAssets(LOAD_CONTEXT);
+
+            log.info("Start importing...pe-entities");
 
             if (isPe) {
                 ImportEntityGroups entityGroups = new ImportEntityGroups(tbRestClient, mapper, BASE_PATH, false);
@@ -98,6 +105,8 @@ public class Import {
                 schedulerEvents.saveSchedulerEvents(LOAD_CONTEXT);
 
             }
+
+            log.info("Start importing...dashboards");
 
             //TODO: finish
             ImportDashboards dashboards = new ImportDashboards(tbRestClient, mapper, BASE_PATH);
@@ -125,7 +134,7 @@ public class Import {
         }
     }
 
-    // TODO: 10.10.18 case TENANT; case BLOB_ENTITY
+    //TODO: case blobEntity, EntityView, TENANT
     private static void importRelations(ObjectMapper mapper, RestClient tbRestClient) {
         JsonNode relations = null;
         try {
@@ -200,6 +209,7 @@ public class Import {
         }
     }
 
+    //TODO: case blobEntity, EntityView, TENANT
     private static EntityId getToEntityId(String toType, String toId) {
         EntityId toEntityId = null;
         switch (toType) {

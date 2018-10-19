@@ -28,7 +28,9 @@ public class ImportDashboards extends ImportEntity {
         JsonNode dashboardsNode = readFileContentToNode("Dashboards.json");
         if (dashboardsNode != null) {
             for (JsonNode dashboardNode : dashboardsNode) {
+                log.info("Trying create dashboard...{}", dashboardNode.get("title").asText());
                 Dashboard dashboard = createDashboard(dashboardNode, loadContext);
+                log.info("created dashboard");
                 loadContext.getDashboardIdMap().put(dashboardNode.get("id").get("id").asText(), dashboard.getId());
                 assignDashboardToCustomers(loadContext, dashboardNode, dashboard);
             }
@@ -113,7 +115,7 @@ public class ImportDashboards extends ImportEntity {
                 log.warn("Such alias type [{}] is not supported!", aliasType);
         }
     }
-
+    //TODO: case blobEntity, EntityView
     private String getNewEntityId(String entityType, LoadContext loadContext, JsonNode entityId) {
         switch (entityType) {
             case "DEVICE":
@@ -122,36 +124,58 @@ public class ImportDashboards extends ImportEntity {
                 return loadContext.getAssetIdMap().get(entityId.asText()).toString();
             case "CUSTOMER":
                 return loadContext.getCustomerIdMap().get(entityId.asText()).toString();
+            case "DASHBOARD":
+                return loadContext.getDashboardIdMap().get(entityId.asText()).toString();
+            case "CONVERTER":
+                return loadContext.getConverterIdMap().get(entityId.asText()).toString();
+            case "INTEGRATION":
+                return loadContext.getIntegrationIdMap().get(entityId.asText()).toString();
+            case "SCHEDULER_EVENT":
+                return loadContext.getSchedulerEventIdMap().get(entityId.asText()).toString();
             default:
                 log.warn("Such entity type [{}] is not supported!", entityType);
                 return null;
         }
     }
-
+    //TODO: case blobEntity, EntityView
     private void changeEntityId(LoadContext loadContext, ObjectNode objectNode) {
         String id = objectNode.get("id").asText();
         String entityType = objectNode.get("entityType").asText();
         switch (entityType) {
             case "DEVICE":
-                objectNode.put("id", loadContext.getDeviceIdMap().get(id).toString());
+                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getDeviceIdMap().get(id).toString());
+                }
                 break;
             case "ASSET":
-                objectNode.put("id", loadContext.getAssetIdMap().get(id).toString());
+                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getAssetIdMap().get(id).toString());
+                }
                 break;
             case "CUSTOMER":
-                objectNode.put("id", loadContext.getCustomerIdMap().get(id).toString());
+                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getCustomerIdMap().get(id).toString());
+                }
                 break;
             case "DASHBOARD":
-                objectNode.put("id", loadContext.getDashboardIdMap().get(id).toString());
+                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getDashboardIdMap().get(id).toString());
+                }
                 break;
             case "CONVERTER":
-                objectNode.put("id", loadContext.getConverterIdMap().get(id).toString());
+                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getConverterIdMap().get(id).toString());
+                }
                 break;
             case "INTEGRATION":
-                objectNode.put("id", loadContext.getIntegrationIdMap().get(id).toString());
+                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getIntegrationIdMap().get(id).toString());
+                }
                 break;
             case "SCHEDULER_EVENT":
-                objectNode.put("id", loadContext.getSchedulerEventIdMap().get(id).toString());
+                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getSchedulerEventIdMap().get(id).toString());
+                }
                 break;
             default:
                 log.warn("Such entity type [{}] is not supported!", entityType);
