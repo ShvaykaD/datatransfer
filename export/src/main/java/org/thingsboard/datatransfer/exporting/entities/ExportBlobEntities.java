@@ -11,8 +11,6 @@ import org.thingsboard.datatransfer.exporting.Export;
 import org.thingsboard.server.common.data.blob.BlobEntity;
 import org.thingsboard.server.common.data.id.BlobEntityId;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Optional;
 
 @Slf4j
@@ -32,17 +30,9 @@ public class ExportBlobEntities extends ExportEntity {
             for (JsonNode node : blobEntitiesOptional.get().get("data")) {
                 ObjectNode blobEntityDataNode = (ObjectNode) node;
 
-                Optional<BlobEntity> blobEntityOptional = tbRestClient.getBlobEntityById(BlobEntityId.fromString(node.get("id").get("id").asText()));
+                Optional<BlobEntity> blobEntityOptional = tbRestClient.getBlobEntityById(BlobEntityId.fromString(blobEntityDataNode.get("id").get("id").asText()));
                 if (blobEntityOptional.isPresent()) {
-                    ByteBuffer buffer = blobEntityOptional.get().getData();
-
-                    if (buffer.hasArray()) {
-                        int arrayOffset = buffer.arrayOffset();
-                        byte[] bytes = Arrays.copyOfRange(buffer.array(), arrayOffset + buffer.position(),
-                                arrayOffset + buffer.limit());
-
-                        blobEntityDataNode.put("data", bytes);
-                    }
+                    blobEntityDataNode.put("data", blobEntityOptional.get().getData().array());
                     blobEntitiesArray.add((blobEntityDataNode));
                 }
             }
