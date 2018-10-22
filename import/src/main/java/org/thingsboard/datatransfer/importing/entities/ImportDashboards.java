@@ -96,13 +96,14 @@ public class ImportDashboards extends ImportEntity {
                 filterNode.set(aliasType, arrayNode);
                 break;
             case "stateEntity":
-                if(!filterNode.get("defaultStateEntity").isNull()){
+                if (!filterNode.get("defaultStateEntity").isNull()) {
                     changeEntityId(loadContext, (ObjectNode) filterNode.get("defaultStateEntity"));
                 }
                 break;
             case "relationsQuery":
             case "assetSearchQuery":
             case "deviceSearchQuery":
+            case "entityViewSearchQuery":
                 ObjectNode objectNode;
                 if (!filterNode.get("defaultStateEntity").isNull()) {
                     objectNode = (ObjectNode) filterNode.get("defaultStateEntity");
@@ -115,7 +116,7 @@ public class ImportDashboards extends ImportEntity {
                 log.warn("Such alias type [{}] is not supported!", aliasType);
         }
     }
-    //TODO: case blobEntity, EntityView
+
     private String getNewEntityId(String entityType, LoadContext loadContext, JsonNode entityId) {
         switch (entityType) {
             case "DEVICE":
@@ -132,12 +133,16 @@ public class ImportDashboards extends ImportEntity {
                 return loadContext.getIntegrationIdMap().get(entityId.asText()).toString();
             case "SCHEDULER_EVENT":
                 return loadContext.getSchedulerEventIdMap().get(entityId.asText()).toString();
+            case "ENTITY_VIEW":
+                return loadContext.getEntityViewIdMap().get(entityId.asText()).toString();
+            case "BLOB_ENTITY":
+                return loadContext.getBlobEntityIdMap().get(entityId.asText()).toString();
             default:
                 log.warn("Such entity type [{}] is not supported!", entityType);
                 return null;
         }
     }
-    //TODO: case blobEntity, EntityView
+
     private void changeEntityId(LoadContext loadContext, ObjectNode objectNode) {
         String id = objectNode.get("id").asText();
         String entityType = objectNode.get("entityType").asText();
@@ -148,33 +153,43 @@ public class ImportDashboards extends ImportEntity {
                 }
                 break;
             case "ASSET":
-                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                if (loadContext.getAssetIdMap().containsKey(id)) {
                     objectNode.put("id", loadContext.getAssetIdMap().get(id).toString());
                 }
                 break;
             case "CUSTOMER":
-                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                if (loadContext.getCustomerIdMap().containsKey(id)) {
                     objectNode.put("id", loadContext.getCustomerIdMap().get(id).toString());
                 }
                 break;
             case "DASHBOARD":
-                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                if (loadContext.getDashboardIdMap().containsKey(id)) {
                     objectNode.put("id", loadContext.getDashboardIdMap().get(id).toString());
                 }
                 break;
             case "CONVERTER":
-                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                if (loadContext.getConverterIdMap().containsKey(id)) {
                     objectNode.put("id", loadContext.getConverterIdMap().get(id).toString());
                 }
                 break;
             case "INTEGRATION":
-                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                if (loadContext.getIntegrationIdMap().containsKey(id)) {
                     objectNode.put("id", loadContext.getIntegrationIdMap().get(id).toString());
                 }
                 break;
             case "SCHEDULER_EVENT":
-                if (loadContext.getDeviceIdMap().containsKey(id)) {
+                if (loadContext.getSchedulerEventIdMap().containsKey(id)) {
                     objectNode.put("id", loadContext.getSchedulerEventIdMap().get(id).toString());
+                }
+                break;
+            case "ENTITY_VIEW":
+                if (loadContext.getEntityViewIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getEntityViewIdMap().get(id).toString());
+                }
+                break;
+            case "BLOB_ENTITY":
+                if (loadContext.getBlobEntityIdMap().containsKey(id)) {
+                    objectNode.put("id", loadContext.getBlobEntityIdMap().get(id).toString());
                 }
                 break;
             default:

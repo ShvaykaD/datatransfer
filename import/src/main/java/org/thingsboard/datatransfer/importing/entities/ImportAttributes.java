@@ -36,7 +36,7 @@ public class ImportAttributes extends ImportEntity {
                     for (JsonNode attributeNode : node.get("attributes")) {
                         ObjectNode savingNode = createSavingNode(attributeNode);
                         String entityType = node.get("entityType").asText();
-                        EntityId entityId = getEntityId(loadContext, node, entityType);
+                        EntityId entityId = getEntityId(loadContext, node.get("entityId").asText(), entityType);
                         if (entityId != null) {
                             if (checkIfPresent(node.get("attributeKeys"), attributeNode.get("key").asText())) {
                                 log.info("Pushing server attributes to {} [{}]", entityType, entityId);

@@ -71,6 +71,8 @@ public class ImportUsers extends ImportEntity {
         User user = new User();
         user.setAuthority(Authority.parse(node.get("authority").asText()));
         user.setEmail(node.get("email").asText());
+        user.setFirstName(node.get("firstName").asText());
+        user.setLastName(node.get("lastName").asText());
         user.setCustomerId(loadContext.getCustomerIdMap().get(node.get("customerId").get("id").asText()));
         if (!node.get("additionalInfo").isNull()) {
             ObjectNode additionalInfoNode = (ObjectNode) node.get("additionalInfo");

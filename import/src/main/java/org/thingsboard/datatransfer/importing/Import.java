@@ -5,14 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.datatransfer.importing.entities.*;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.ConverterId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.IntegrationId;
-import org.thingsboard.server.common.data.id.SchedulerEventId;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -108,7 +102,6 @@ public class Import {
 
             log.info("Start importing...dashboards");
 
-            //TODO: finish
             ImportDashboards dashboards = new ImportDashboards(tbRestClient, mapper, BASE_PATH);
             dashboards.saveTenantDashboards(LOAD_CONTEXT);
 
@@ -118,6 +111,11 @@ public class Import {
             //TODO: finish
             ImportRuleChains ruleChains = new ImportRuleChains(tbRestClient, mapper, BASE_PATH);
             ruleChains.saveRuleChains(LOAD_CONTEXT);
+
+            log.info("Start importing...blobEntities");
+
+            ImportBlobEntities blobEntities = new ImportBlobEntities(tbRestClient, mapper, BASE_PATH);
+            blobEntities.saveTenantBlobEntities(LOAD_CONTEXT);
 
 
             ImportTelemetry telemetry = new ImportTelemetry(mapper, BASE_PATH, httpClient);
@@ -134,7 +132,7 @@ public class Import {
         }
     }
 
-    //TODO: case blobEntity, EntityView, TENANT
+    //TODO: case TENANT
     private static void importRelations(ObjectMapper mapper, RestClient tbRestClient) {
         JsonNode relations = null;
         try {
@@ -201,6 +199,20 @@ public class Import {
                                 tbRestClient.makeRelation(relationType, schedulerEventId, entityId);
                             }
                             break;
+                        case "ENTITY_VIEW":
+                            EntityViewId entityViewId = LOAD_CONTEXT.getEntityViewIdMap().get(fromId);
+                            entityId = getToEntityId(toType, toId);
+                            if (entityId != null) {
+                                tbRestClient.makeRelation(relationType, entityViewId, entityId);
+                            }
+                            break;
+                        case "BLOB_ENTITY":
+                            BlobEntityId blobEntityId = LOAD_CONTEXT.getBlobEntityIdMap().get(fromId);
+                            entityId = getToEntityId(toType, toId);
+                            if (entityId != null) {
+                                tbRestClient.makeRelation(relationType, blobEntityId, entityId);
+                            }
+                            break;
                         default:
                             log.warn("Entity type is not supported: {}", fromType);
                     }
@@ -209,7 +221,7 @@ public class Import {
         }
     }
 
-    //TODO: case blobEntity, EntityView, TENANT
+    //TODO: case TENANT
     private static EntityId getToEntityId(String toType, String toId) {
         EntityId toEntityId = null;
         switch (toType) {
@@ -233,6 +245,12 @@ public class Import {
                 break;
             case "SCHEDULER_EVENT":
                 toEntityId = LOAD_CONTEXT.getSchedulerEventIdMap().get(toId);
+                break;
+            case "ENTITY_VIEW":
+                toEntityId = LOAD_CONTEXT.getEntityViewIdMap().get(toId);
+                break;
+            case "BLOB_ENTITY":
+                toEntityId = LOAD_CONTEXT.getBlobEntityIdMap().get(toId);
                 break;
             default:
                 log.warn("Entity type is not supported: {}", toType);

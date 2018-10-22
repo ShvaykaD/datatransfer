@@ -2,6 +2,8 @@ package org.thingsboard.datatransfer.importing.entities;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.datatransfer.importing.LoadContext;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -33,6 +35,17 @@ class ImportEntity {
             log.warn("Could not read [{}] file", fileName);
         }
         return jsonNode;
+    }
+
+    JsonElement readFileContentToGson(String fileName) {
+        JsonParser parser = new JsonParser();
+        JsonElement jsonElement = null;
+        try {
+            jsonElement = parser.parse(new String(Files.readAllBytes(Paths.get(basePath + fileName))));
+        } catch (IOException e) {
+            log.warn("Could not read [{}] file", fileName);
+        }
+        return jsonElement;
     }
 
     void waitForPack(List<Future> resultList) {
@@ -68,26 +81,26 @@ class ImportEntity {
 
     }
 
-    EntityId getEntityId(LoadContext loadContext, JsonNode node, String entityType) {
+    EntityId getEntityId(LoadContext loadContext, String strEntityId, String entityType) {
         EntityId entityId = null;
         switch (entityType) {
             case "DEVICE":
-                entityId = loadContext.getDeviceIdMap().get(node.get("entityId").asText());
+                entityId = loadContext.getDeviceIdMap().get(strEntityId);
                 break;
             case "ASSET":
-                entityId = loadContext.getAssetIdMap().get(node.get("entityId").asText());
+                entityId = loadContext.getAssetIdMap().get(strEntityId);
                 break;
             case "CUSTOMER":
-                entityId = loadContext.getCustomerIdMap().get(node.get("entityId").asText());
+                entityId = loadContext.getCustomerIdMap().get(strEntityId);
                 break;
             case "ENTITY_GROUP":
-                entityId = loadContext.getEntityGroupIdMap().get(node.get("entityId").asText());
+                entityId = loadContext.getEntityGroupIdMap().get(strEntityId);
                 break;
             case "CONVERTER":
-                entityId = loadContext.getConverterIdMap().get(node.get("entityId").asText());
+                entityId = loadContext.getConverterIdMap().get(strEntityId);
                 break;
             case "INTEGRATION":
-                entityId = loadContext.getIntegrationIdMap().get(node.get("entityId").asText());
+                entityId = loadContext.getIntegrationIdMap().get(strEntityId);
                 break;
             default:
                 log.warn("Entity type is not supported: {}", entityType);

@@ -153,6 +153,7 @@ public class ImportRuleChains extends ImportEntity {
         }
     }
 
+    // TODO: 22.10.18 case Tenant
     private void changeRuleNodeConfiguration(LoadContext loadContext, ObjectNode ruleNodeConfiguration, String typeField, String idField) {
         String entityType = ruleNodeConfiguration.get(typeField).asText();
         String entityId = ruleNodeConfiguration.get(idField).asText();
@@ -163,9 +164,9 @@ public class ImportRuleChains extends ImportEntity {
             case "ASSET":
                 ruleNodeConfiguration.put(idField, loadContext.getAssetIdMap().get(entityId).toString());
                 break;
-            /*case "ENTITY_VIEW":
-
-                break;*/
+            case "ENTITY_VIEW":
+                ruleNodeConfiguration.put(idField, loadContext.getEntityViewIdMap().get(entityId).toString());
+                break;
             /*case "TENANT":
 
                 break;*/
@@ -184,9 +185,9 @@ public class ImportRuleChains extends ImportEntity {
             case "SCHEDULER_EVENT":
                 ruleNodeConfiguration.put(idField, loadContext.getSchedulerEventIdMap().get(entityId).toString());
                 break;
-            /*case "BLOB_ENTITY":
-
-                break;*/
+            case "BLOB_ENTITY":
+                ruleNodeConfiguration.put(idField, loadContext.getBlobEntityIdMap().get(entityId).toString());
+                break;
             default:
                 log.warn("Such entity type: [{}] is not supported for rule node type: {}", entityType, ruleNodeConfiguration.get("type").asText());
         }
